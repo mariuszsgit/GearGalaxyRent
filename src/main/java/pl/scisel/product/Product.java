@@ -3,6 +3,10 @@ package pl.scisel.product;
 import jakarta.persistence.*;
 import lombok.*;
 import pl.scisel.category.Category;
+import pl.scisel.rental.RentalOffer;
+import pl.scisel.user.User;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,4 +30,12 @@ public class Product {
 
     @ManyToOne
     private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    @OneToMany(mappedBy = "product")
+    private List<RentalOffer> rentalOffers;
+
 }

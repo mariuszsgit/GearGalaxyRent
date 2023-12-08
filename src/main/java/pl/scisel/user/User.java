@@ -2,6 +2,7 @@ package pl.scisel.user;
 
 import jakarta.persistence.*;
 import pl.scisel.product.Product;
+import pl.scisel.rental.RentalOffer;
 
 import java.util.List;
 
@@ -16,15 +17,25 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
+    @Column(nullable = false, length = 100)
+    private String password;
+
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 100)
-    private String password;
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 50)
+    private String last_name;
+
+    @OneToOne(mappedBy = "user")
+    private UserCompany userCompany;
 
     @OneToMany(mappedBy = "owner")
     private List<Product> ownedProducts;
 
-    public User() {
-    }
+    @OneToMany(mappedBy = "owner")
+    private List<RentalOffer> rentalOffers;
+
 }
