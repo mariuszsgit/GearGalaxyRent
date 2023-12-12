@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{app.category.header.edit}">Edit category</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="#{app.category.header.edit}">Edit category</h2>
+    <div th:replace="~{category/form :: form}"></div>
+</section>
+</body>
+</html>

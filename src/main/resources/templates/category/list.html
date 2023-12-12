@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section layout:fragment="content">
+
+    <div class="row">
+
+        <div class="col-md-9">
+            <h2 th:text="#{app.category.header}"></h2>
+        </div>
+        <div class="col-md-3 text-right">
+            <a th:href="@{/category/add}" class="btn btn-success align" th:text="#{app.button.category.add}"></a>
+        </div>
+    </div>
+    <table width="100%">
+        <thead>
+        <tr>
+            <th th:text="#{app.id}">
+            <th th:text="#{app.name}">
+            <th th:text="#{app.description}">
+            <th th:text="#{app.action}" th:colspan="2">
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="category, status : ${categories}">
+            <td th:text="${status.index + 1}"></td>
+            <td th:text="${category.name}"></td>
+            <td th:text="${category.description}"></td>
+            <td>
+                <a th:href="@{/category/edit/{id}(id=${category.id})}" th:text="#{app.button.edit}"
+                   class="btn btn-primary">Edit</a>
+            </td>
+            <td>
+                <a href="#" th:data-category-id="${category.id}" th:text="#{app.button.delete}"
+                   class="btn btn-danger delete-button">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog"
+         aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Potwierdzenie usunięcia</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Czy na pewno chcesz usunąć tę kategorię?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                    <a id="deleteCategoryLink" class="btn btn-danger" href="">Tak, usuń</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

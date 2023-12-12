@@ -1,9 +1,9 @@
-package pl.scisel.product;
+package pl.scisel.item;
 
 import jakarta.persistence.*;
 import lombok.*;
 import pl.scisel.category.Category;
-import pl.scisel.rental.RentalOffer;
+import pl.scisel.rental.Rental;
 import pl.scisel.user.User;
 
 import java.util.List;
@@ -14,9 +14,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "description")
 @Data
-public class Product {
+@Table(name = "items")
+public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +28,8 @@ public class Product {
     @Column(nullable = false, length = 1500)
     private String description;
 
+    private String imageUrl;
+
     @ManyToOne
     private Category category;
 
@@ -35,7 +37,7 @@ public class Product {
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    @OneToMany(mappedBy = "product")
-    private List<RentalOffer> rentalOffers;
+    @OneToMany(mappedBy = "item")
+    private List<Rental> rentals;
 
 }
