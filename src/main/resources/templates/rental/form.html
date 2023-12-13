@@ -3,63 +3,104 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{app.item.header.add}">Form item</title>
+    <title th:text="#{app.rental.header.add}">Form rental</title>
 </head>
 <body>
-<div th:object="${item}" th:remove="tag">
-    <div class="form-group">
-        <label class="control-label" th:for="name">
-            <span th:remove="tag" th:text="#{app.item.name}"></span>
-            <span class="required">*</span>
-        </label>
-        <input th:field="*{name}" type="text" required="required"
-               class="form-control col-md-12 col-xs-12" th:id="name" id="name"/>
-    </div>
-    <div th:if="${#fields.hasErrors('name')}" class="alert alert-danger">
-        <div th:each="error : ${#fields.errors('name')}" th:utext="${error}"></div>
-    </div>
-    <!-- Description -->
-    <div class="form-group">
-        <label class="control-label" th:for="textarea">
-            <span th:remove="tag" th:text="#{app.item.description}">Category description</span>
-            <span class="required">*</span>
-        </label>
-        <textarea th:field="*{description}" maxlength="600" rows="4" cols="50"
-                  class="form-control col-md-12 col-xs-12"></textarea>
-    </div>
+<div th:object="${rental}" th:remove="tag">
+    <div class="row">
 
-    <div th:if="${#fields.hasErrors('description')}" class="alert alert-danger">
-        <div th:each="error : ${#fields.errors('description')}" th:utext="${error}"></div>
-        <div th:if="*{description != null}">
-            <span th:utext="#{app.charCount.message}"></span>
-            <span th:text="${#strings.length(item.description)}" th:class="font-weight-bold"></span>
+        <!-- Created -->
+        <div th:if="${rental.created != null}" class="form-group col-md-4 col-xs-12">
+            <label class="control-label" th:for="name">
+                <span th:remove="tag" th:text="#{app.created}"></span>
+            </label>
+            <input th:field="*{created}" type="text" required="required"
+                   class="form-control col-md-12 col-xs-12" th:id="name" id="name"
+                   th:readonly="${rental.created != null}" />
+
         </div>
+
+        <!-- RentFrom -->
+        <div class="form-group col-md-4 col-xs-12">
+            <label class="control-label" th:for="rentFrom">
+                <span th:remove="tag" th:text="#{app.date.from}"></span>
+                <span class="required">*</span>
+            </label>
+            <div class="input-group">
+                <input th:field="*{rentFrom}" type="text" required="required"
+                       class="form-control datetimepicker-input col-md-12 col-xs-12" th:id="rentFrom" id="rentFrom"/>
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RentTo -->
+        <div class="form-group col-md-4 col-xs-12">
+            <label class="control-label" th:for="rentTo">
+                <span th:remove="tag" th:text="#{app.date.to}"></span>
+                <span class="required">*</span>
+            </label>
+            <div class="input-group">
+                <input th:field="*{rentTo}" type="text" required="required"
+                       class="form-control datetimepicker-input col-md-12 col-xs-12" th:id="rentTo" id="rentTo"/>
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
-    <!-- Image -->
+    <!-- Price -->
     <div class="form-group">
-        <label class="control-label" th:for="image">
-            <span th:remove="tag" th:text="#{app.item.image}"></span>
+        <label class="control-label" th:for="price">
+            <span th:remove="tag" th:text="#{app.rental.price}"></span>
             <span class="required">*</span>
         </label>
-        <input th:field="*{imageUrl}" type="text" required="required"
-               class="form-control col-md-12 col-xs-12" th:id="image" id="image"/>
+        <input type="number" th:field="*{price}" th:value="${rental.price != null ? rental.price : 0}" required="required"
+               min="0" step="0.01" class="form-control col-md-12 col-xs-12" th:id="price" id="price"/>
+    </div>
+    <div th:if="${#fields.hasErrors('price')}" class="alert alert-danger">
+        <div th:each="error : ${#fields.errors('price')}" th:utext="${error}"></div>
     </div>
 
-    <!-- Category -->
+    <!-- Status -->
     <div class="form-group">
-        <label for="category">Wybierz kategorię:</label>
-        <select id="category" name="category" class="form-control">
-            <option th:value="0" th:text="#{app.category.list}"></option>
-            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"
-                    th:selected="${item.category != null and category.id eq item.category.id}"></option>
+        <label for="rentalStatus">
+            <span th:text="#{app.rental.status}">Status</span>
+        </label>
+        <select id="rentalStatus" name="rentalStatus" class="form-control">
+            <option th:value="0" th:text="#{app.rental.status.list}"> Wybierz status</option>
+            <option th:each="status : ${allStatuses}" th:value="${status.name()}"
+                    th:text="#{${'app.rental.status.' + status.name()}}"
+                    th:selected="${rental.rentalStatus == status}">
+            </option>
         </select>
+    </div>
+
+    <!-- Items -->
+    <div class="form-group">
+        <label for="items">
+            <span th:text="#{app.item.list}">Items</span>
+        </label>
+        <select id="items" name="item.id" class="form-control">
+            <option th:value="0" th:text="#{app.item.choose}">Wybierz przedmiot</option>
+            <option th:each="item : ${items}"
+                    th:value="${item.id}"
+                    th:text="${item.name}"
+                    th:selected="${rental.item != null and item.id == rental.item.id}">
+            </option>
+        </select>
+
     </div>
 
     <!-- Submit -->
     <div class="form-group">
         <button type="submit" class="btn btn-primary" th:text="#{button.save}">Save</button>
-        <a th:href="@{/item/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
+        <a th:href="@{/rental/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
     </div>
 </div>
 </body>

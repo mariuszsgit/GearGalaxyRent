@@ -23,7 +23,7 @@ public class ItemController {
 
     // Get
     @RequestMapping("/add")
-    public String addItem(Model model) {
+    public String add(Model model) {
         model.addAttribute("item", new Item());
         model.addAttribute("categories", categoryRepository.findAll());
         return "item/add";
@@ -31,7 +31,7 @@ public class ItemController {
 
     // Post
     @PostMapping("/add")
-    public String saveItem(@Valid Item item, BindingResult result, Model model) {
+    public String save(@Valid Item item, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("item", item);
             return "item/add";
@@ -42,7 +42,7 @@ public class ItemController {
 
     // Edit
     @RequestMapping("/edit/{id}")
-    public String editItem(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Model model) {
         Item item = itemRepository.findById(id).get();
         model.addAttribute("item", item);
         model.addAttribute("categories", categoryRepository.findAll());
@@ -68,13 +68,13 @@ public class ItemController {
     }
 
     @RequestMapping("/list")
-    public String listItem(Model model) {
+    public String list(Model model) {
         model.addAttribute("items", itemRepository.findAll());
         return "item/list";
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteItem(@PathVariable Long id) {
+    public String delete(@PathVariable Long id) {
 
         Optional<Item> itemOptional = itemRepository.findById(id);
         if (itemOptional.isPresent()) {

@@ -27,14 +27,14 @@ public class CategoryController {
 
     // Get
     @RequestMapping("/add")
-    public String addCategory(Model model) {
+    public String add(Model model) {
         model.addAttribute("category", new Category());
         return "category/add";
     }
 
     // Post
     @PostMapping("/add")
-    public String saveCategory(@Valid Category category, BindingResult result, Model model) {
+    public String save(@Valid Category category, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("category", category);
             return "category/add";
@@ -45,7 +45,7 @@ public class CategoryController {
 
     // Edit
     @RequestMapping("/edit/{id}")
-    public String editCategory(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Model model) {
         Category category = categoryRepository.findById(id).get();
         model.addAttribute("category", category);
         return "category/edit";
@@ -64,6 +64,7 @@ public class CategoryController {
             categoryEdited.setName(category.getName());
             categoryEdited.setDescription(category.getDescription());
             categoryEdited.setCategoryOrder(category.getCategoryOrder());
+            categoryEdited.setCategoryOrder(category.getCategoryOrder());
             categoryRepository.save(categoryEdited);
         }
 
@@ -71,7 +72,7 @@ public class CategoryController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteCategory(@PathVariable Long id) {
+    public String delete(@PathVariable Long id) {
 
         Optional<Category> categoryOptional = categoryRepository.findById(id);
         if (categoryOptional.isPresent()) {

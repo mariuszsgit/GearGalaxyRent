@@ -8,13 +8,13 @@ import pl.scisel.user.User;
 
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Entity
 @Table(name = "items")
 public class Item {
 

@@ -4,7 +4,7 @@
       layout:decorate="~{layout}" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title th:fragment="pageTitle" th:text="#{app.item.list}">Item list</title>
+    <title th:fragment="pageTitle" th:text="#{app.rental.list}">Rental list</title>
 </head>
 <body>
 <section layout:fragment="content">
@@ -12,31 +12,35 @@
     <div class="row">
 
         <div class="col-md-9">
-            <h2 th:text="#{app.item.header}"></h2>
+            <h2 th:text="#{app.rental.header}"></h2>
         </div>
         <div class="col-md-3 text-right">
-            <a th:href="@{/item/add}" class="btn btn-success align" th:text="#{app.item.button.add}"></a>
+            <a th:href="@{/rental/add}" class="btn btn-success align" th:text="#{app.rental.button.add}"></a>
         </div>
     </div>
-    <table width="100%">
+    <table th:class="table">
         <thead>
         <tr>
             <th th:text="#{app.id}">
-            <th th:text="#{app.name}">
-            <th th:text="#{app.description}">
-            <th th:text="#{app.action}" th:colspan="2">
+            <th th:text="#{app.created}">
+            <th th:text="#{app.rental.date}">
+            <th th:text="#{app.rental.price}">
+            <th th:text="#{app.rental.status}">
+            <th th:text="#{app.action}" th:colspan="2" th:align="right">
         </tr>
         </thead>
         <tbody>
-        <tr th:each="item, status : ${items}">
+        <tr th:each="rental, status : ${rentals}">
             <td th:text="${status.index + 1}"></td>
-            <td th:text="${item.name}"></td>
-            <td th:text="${item.description}"></td>
+            <td th:text="${#temporals.format(rental.created, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:utext="'Od: ' + ${#temporals.format(rental.rentFrom, 'dd-MM-yyyy HH:mm')} + '<br>Do: ' + ${#temporals.format(rental.rentTo, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:text="${rental.price != null ? rental.price : 0} + ' PLN'"></td>
+            <td th:text="#{${'app.rental.status.' + rental.rentalStatus}}"></td>
             <td th:align="right">
-                <a th:href="@{/item/edit/{id}(id=${item.id})}" th:text="#{app.button.edit}"
+                <a th:href="@{/rental/edit/{id}(id=${rental.id})}" th:text="#{app.button.edit}"
                    class="btn btn-primary">Edit</a>
-                <a href="#" th:data-category-id="${item.id}" th:text="#{app.button.delete}"
-                   th:data-delete-path="@{'/item/delete/' + ${item.id}}"
+                <a href="#" th:data-category-id="${rental.id}" th:text="#{app.button.delete}"
+                   th:data-delete-path="@{'/rental/delete/' + ${rental.id}}"
                    class="btn btn-danger delete-button">Usuń</a>
             </td>
         </tr>
@@ -55,7 +59,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Czy na pewno chcesz usunąć ten przedmiot?
+                    Czy na pewno chcesz usunąć ten Wynajem?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
