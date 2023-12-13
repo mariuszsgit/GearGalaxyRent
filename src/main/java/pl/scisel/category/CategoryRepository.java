@@ -9,8 +9,9 @@ import java.util.List;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     Category findById(long id);
+    List<Category> findAll();
 
-    @Query("SELECT c FROM Category c ORDER BY c.categoryOrder")
+    @Query("SELECT c FROM Category c ORDER BY c.categoryOrder asc")
     List<Category> findAllSortByOrder();
 
 

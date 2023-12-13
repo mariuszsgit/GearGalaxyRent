@@ -3,15 +3,15 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{app.category.header.add}">Add category</title>
+    <title th:text="#{app.item.header.add}">Add item</title>
 </head>
 <body>
 <section layout:fragment="content">
-    <h2 th:text="#{app.category.header.add}">Add category</h2>
-    <form method="post" id="add-form"
-          th:action="@{/category/add}" th:object="${category}"
+    <h2 th:text="#{app.item.header.add}">Add item</h2>
+    <form method="post" id="add-item-form"
+          th:action="@{/item/add}" th:object="${item}"
           class="form-horizontal form-label-left">
-        <div th:replace="~{category/form :: div}" th:remove="tag"></div>
+        <div th:replace="~{item/form :: div}" th:remove="tag"></div>
     </form>
 </section>
 </body>

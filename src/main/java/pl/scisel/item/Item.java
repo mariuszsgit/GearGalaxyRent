@@ -28,6 +28,7 @@ public class Item {
     @Column(nullable = false, length = 1500)
     private String description;
 
+    @Column(length = 1024)
     private String imageUrl;
 
     @ManyToOne

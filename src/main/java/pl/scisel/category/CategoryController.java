@@ -4,10 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -22,7 +19,9 @@ public class CategoryController {
 
     @RequestMapping("/list")
     public String list(Model model) {
+/*        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Order.asc("id"))));*/
         model.addAttribute("categories", categoryRepository.findAllSortByOrder());
+
         return "category/list";
     }
 
@@ -50,6 +49,25 @@ public class CategoryController {
         Category category = categoryRepository.findById(id).get();
         model.addAttribute("category", category);
         return "category/edit";
+    }
+
+    @PostMapping("/edit")
+    public String update(@Valid Category category, BindingResult result, Model model, @RequestParam(name = "id") Long id) {
+        if (result.hasErrors()) {
+            model.addAttribute("category", category);
+            return "category/edit";
+        }
+        Optional<Category> categoryOptional = categoryRepository.findById(id);
+        if (categoryOptional.isPresent()) {
+            Category categoryEdited = categoryOptional.get();
+            categoryEdited.setId(category.getId());
+            categoryEdited.setName(category.getName());
+            categoryEdited.setDescription(category.getDescription());
+            categoryEdited.setCategoryOrder(category.getCategoryOrder());
+            categoryRepository.save(categoryEdited);
+        }
+
+        return "redirect:/category/list";
     }
 
     @GetMapping("/delete/{id}")

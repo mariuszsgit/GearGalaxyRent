@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{app.item.header.edit}">Edit category</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="#{app.item.header.edit}">Edit category</h2>
+    <form method="post" id="edit-item-form"
+          th:action="@{/item/edit}" th:object="${item}"
+          class="form-horizontal form-label-left">
+            <input type="hidden" th:field="${item.id}" />
+    <div th:replace="~{item/form :: div}"></div>
+</section>
+</body>
+</html>

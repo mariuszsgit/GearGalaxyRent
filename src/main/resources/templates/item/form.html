@@ -3,13 +3,13 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{app.category.header.add}">Form category</title>
+    <title th:text="#{app.item.header.add}">Form item</title>
 </head>
 <body>
-<div th:object="${category}" th:remove="tag">
+<div th:object="${item}" th:remove="tag">
     <div class="form-group">
         <label class="control-label" th:for="name">
-            <span th:remove="tag" th:text="#{app.category.name}"></span>
+            <span th:remove="tag" th:text="#{app.item.name}"></span>
             <span class="required">*</span>
         </label>
         <input th:field="*{name}" type="text" required="required"
@@ -18,10 +18,10 @@
     <div th:if="${#fields.hasErrors('name')}" class="alert alert-danger">
         <div th:each="error : ${#fields.errors('name')}" th:utext="${error}"></div>
     </div>
-
+    <!-- Description -->
     <div class="form-group">
         <label class="control-label" th:for="textarea">
-            <span th:remove="tag" th:text="#{app.category.description}">Category description</span>
+            <span th:remove="tag" th:text="#{app.item.description}">Category description</span>
             <span class="required">*</span>
         </label>
         <textarea th:field="*{description}" maxlength="600" rows="4" cols="50"
@@ -32,27 +32,35 @@
         <div th:each="error : ${#fields.errors('description')}" th:utext="${error}"></div>
         <div th:if="*{description != null}">
             <span th:utext="#{app.charCount.message}"></span>
-            <span th:text="${#strings.length(category.description)}" th:class="font-weight-bold"></span>
+            <span th:text="${#strings.length(item.description)}" th:class="font-weight-bold"></span>
         </div>
     </div>
 
+    <!-- Image -->
     <div class="form-group">
-        <label class="control-label" th:for="order">
-            <span th:remove="tag" th:text="#{app.category.order}"></span>
+        <label class="control-label" th:for="image">
+            <span th:remove="tag" th:text="#{app.item.image}"></span>
+            <span class="required">*</span>
         </label>
-        <input th:field="*{categoryOrder}" type="number" th:id="order" id="order"
-               class="form-control col-md-12 col-xs-12"/>
-    </div>
-    <div th:if="${#fields.hasErrors('categoryOrder')}" class="alert alert-danger">
-        <div th:each="error : ${#fields.errors('categoryOrder')}" th:utext="${error}"></div>
+        <input th:field="*{imageUrl}" type="text" required="required"
+               class="form-control col-md-12 col-xs-12" th:id="image" id="image"/>
     </div>
 
+    <!-- Category -->
+    <div class="form-group">
+        <label for="category">Wybierz kategorię:</label>
+        <select id="category" name="category" class="form-control">
+            <option th:value="0" th:text="#{app.category.list}"></option>
+            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"
+                    th:selected="${item.category != null and category.id eq item.category.id}"></option>
+        </select>
+    </div>
+
+    <!-- Submit -->
     <div class="form-group">
         <button type="submit" class="btn btn-primary" th:text="#{button.save}">Save</button>
-        <a th:href="@{/category/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
+        <a th:href="@{/item/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
     </div>
 </div>
-
-<!--    </form>-->
 </body>
 </html>

@@ -4,7 +4,7 @@
       layout:decorate="~{layout}" lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title th:fragment="pageTitle" th:text="#{app.item.list}">Item list</title>
 </head>
 <body>
 <section layout:fragment="content">
@@ -12,10 +12,10 @@
     <div class="row">
 
         <div class="col-md-9">
-            <h2 th:text="#{app.category.header}"></h2>
+            <h2 th:text="#{app.item.header}"></h2>
         </div>
         <div class="col-md-3 text-right">
-            <a th:href="@{/category/add}" class="btn btn-success align" th:text="#{app.button.category.add}"></a>
+            <a th:href="@{/item/add}" class="btn btn-success align" th:text="#{app.item.button.add}"></a>
         </div>
     </div>
     <table width="100%">
@@ -28,17 +28,15 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="category, status : ${categories}">
+        <tr th:each="item, status : ${items}">
             <td th:text="${status.index + 1}"></td>
-            <td th:text="${category.name}"></td>
-            <td th:text="${category.description}"></td>
-            <td>
-                <a th:href="@{/category/edit/{id}(id=${category.id})}" th:text="#{app.button.edit}"
+            <td th:text="${item.name}"></td>
+            <td th:text="${item.description}"></td>
+            <td th:align="right">
+                <a th:href="@{/item/edit/{id}(id=${item.id})}" th:text="#{app.button.edit}"
                    class="btn btn-primary">Edit</a>
-            </td>
-            <td>
-                <a href="#" th:data-category-id="${category.id}" th:text="#{app.button.delete}"
-                        th:data-delete-path="@{'/category/delete/' + ${category.id}}"
+                <a href="#" th:data-category-id="${item.id}" th:text="#{app.button.delete}"
+                   th:data-delete-path="@{'/item/delete/' + ${item.id}}"
                    class="btn btn-danger delete-button">Usuń</a>
             </td>
         </tr>
@@ -57,7 +55,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Czy na pewno chcesz usunąć tę kategorię?
+                    Czy na pewno chcesz usunąć ten przedmiot?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>

@@ -1,6 +1,7 @@
 package pl.scisel.category;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -18,6 +19,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Digits(integer = 10, fraction = 0, message = "{category.categoryOrder.digits.message}")
     private Integer categoryOrder;
 
     @NotBlank(message = "{category.name.notBlank.message}")
@@ -29,7 +31,6 @@ public class Category {
     @Size(min = 10, max = 600, message = "{category.description.size.message}")
     @Column(length = 600)
     private String description;
-
 
 }
 
