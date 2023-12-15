@@ -1,7 +1,26 @@
-h1 {color: dodgerblue; }
+h1 {color: dodgerblue; margin-bottom: 0}
 .page-header {
-    padding-bottom: 9px;
-    margin: 40px 0 20px;
+    padding-bottom: 5px;
+    margin: 10px 0 0;
+    border-bottom: 1px solid lightblue;
+}
+.menu {
+    padding: 10px 10px;
+    margin-bottom: 20px;
     border-bottom: 1px solid #eee;
+}
+.gradient {
+    background: linear-gradient(to bottom, #eee, #fff);
+}
+.page-login-header-user-guest {
+    padding-top: 7px;
+    padding-bottom: 7px;
+    margin-bottom: 0;
+}
+.custom-footer {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin: 20px 0 20px;
+    border-top: 1px solid #eee;
 }
 table {width: 100%;}

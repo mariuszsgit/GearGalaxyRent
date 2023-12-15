@@ -32,15 +32,17 @@ public class Rental {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime updated;
 
-    @NotNull(message = "rental.price.notNull.message")
+    @NotNull
     @Digits (integer = 10, fraction = 2, message = "rental.quantity.digits.message")
     @DecimalMin(value = "0.00", message = "rental.price.min.message")
     @DecimalMax(value = "10000.00", message = "rental.price.max.message")
     private BigDecimal price;
 
+    @NotNull(message = "{rental.rentFrom.notNull.message}")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime rentFrom;
 
+    @NotNull(message = "{rental.rentTo.notNull.message}")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime rentTo;
 
@@ -62,6 +64,5 @@ public class Rental {
             created = LocalDateTime.now();
         }
     }
-
 
 }

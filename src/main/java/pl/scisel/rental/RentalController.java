@@ -2,6 +2,8 @@ package pl.scisel.rental;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +12,7 @@ import pl.scisel.category.CategoryRepository;
 import pl.scisel.item.ItemRepository;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Controller
@@ -19,6 +22,8 @@ public class RentalController {
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
     private final RentalRepository rentalRepository;
+    @Autowired
+    private MessageSource messageSource;
 
     @Autowired
     RentalController(RentalRepository rentalRepository, ItemRepository itemRepository, CategoryRepository categoryRepository) {
@@ -63,9 +68,22 @@ public class RentalController {
 
     //Edit Post
     @PostMapping("/edit")
-    public String update(@Valid Rental rental, BindingResult result, Model model, @RequestParam(name = "id") Long id) {
+    public String update(@Valid Rental rental,
+                         BindingResult result, Model model,
+                         @RequestParam(name = "id") Long id) {
+
+        if (rental.getRentFrom() != null && rental.getRentTo() != null) {
+            if (rental.getRentTo().isBefore(rental.getRentFrom())) {
+                Locale currentLocale = LocaleContextHolder.getLocale();
+                String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
+                result.rejectValue("rentTo", "error.rentTo", errorMessage);
+            }
+        }
+
         if (result.hasErrors()) {
             model.addAttribute("rental", rental);
+            model.addAttribute("allStatuses", RentalStatus.values());
+            model.addAttribute("items", itemRepository.findAll());
             return "rental/edit";
         }
         Optional<Rental> rentalOptional = rentalRepository.findById(id);

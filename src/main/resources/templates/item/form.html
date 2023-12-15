@@ -21,7 +21,7 @@
     <!-- Description -->
     <div class="form-group">
         <label class="control-label" th:for="textarea">
-            <span th:remove="tag" th:text="#{app.item.description}">Category description</span>
+            <span th:remove="tag" th:text="#{app.item.description}">Item description</span>
             <span class="required">*</span>
         </label>
         <textarea th:field="*{description}" maxlength="600" rows="4" cols="50"

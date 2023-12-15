@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
+<head>
+    <title>Login</title>
+</head>
+<body>
+
+<section layout:fragment="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card my-5">
+                    <div class="card-body">
+                        <h2 class="card-title text-center" th:text="#{app.login.title}">Login</h2>
+
+                        <div th:if="${param.error}" class="alert alert-danger" th:text="#{login.error.message}">
+                            Invalid username and password.
+                        </div>
+
+                        <div th:if="${param.logout}" class="alert alert-success" th:text="#{login.logoutSuccess.message}">
+                            You have been logged out.
+                        </div>
+
+                        <form method="post" th:action="@{/perform_login}">
+                            <div class="form-group">
+                                <label for="username" th:text="#{app.login.username}">User Name:</label>
+                                <input type="text" class="form-control" id="username" name="username" th:placeholder="#{login.usernamePlaceholder}"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="password" th:text="#{app.login.password}">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" th:placeholder="#{app.login.passwordPlaceholder}"/>
+                            </div>
+                            <div class="text-center">
+                                <input type="submit" class="btn btn-primary" th:value="#{app.login.signIn}" value="Sign In"/>
+                            </div>
+                            <input type="hidden" name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+</body>
+</html>

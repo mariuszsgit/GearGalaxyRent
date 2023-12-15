@@ -12,11 +12,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // datepicker
     $(function () {
         $(".datetimepicker-input").datetimepicker({
             dateFormat: "yy-mm-dd",
             timeFormat: "HH:mm"
         });
     });
+
+    // komunikat
+    let alertBox = document.querySelector('.alert');
+    if (alertBox) {
+        setTimeout(function() {
+            alertBox.style.display = 'none';
+        }, 3000);
+    }
 
 });

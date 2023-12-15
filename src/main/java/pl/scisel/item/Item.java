@@ -1,6 +1,7 @@
 package pl.scisel.item;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import pl.scisel.category.Category;
 import pl.scisel.rental.Rental;
@@ -22,6 +23,7 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "{item.name.notBlank.message}")
     @Column(nullable = false, length = 70)
     private String name;
 

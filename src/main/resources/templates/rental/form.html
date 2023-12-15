@@ -27,7 +27,7 @@
                 <span class="required">*</span>
             </label>
             <div class="input-group">
-                <input th:field="*{rentFrom}" type="text" required="required"
+                <input th:field="*{rentFrom}" type="text"
                        class="form-control datetimepicker-input col-md-12 col-xs-12" th:id="rentFrom" id="rentFrom"/>
                 <div class="input-group-append">
                     <span class="input-group-text"><i class="fa fa-calendar"></i></span>
@@ -43,15 +43,21 @@
                 <span class="required">*</span>
             </label>
             <div class="input-group">
-                <input th:field="*{rentTo}" type="text" required="required"
+                <input th:field="*{rentTo}" type="text"
                        class="form-control datetimepicker-input col-md-12 col-xs-12" th:id="rentTo" id="rentTo"/>
                 <div class="input-group-append">
                     <span class="input-group-text"><i class="fa fa-calendar"></i></span>
                 </div>
             </div>
         </div>
+   </div>
 
+    <div th:if="${#fields.hasErrors('rentFrom')}" class="alert alert-danger">
+        <div th:each="error : ${#fields.errors('rentFrom')}" th:text="${error}"></div>
+    </div>
 
+    <div th:if="${#fields.hasErrors('rentTo')}" class="alert alert-danger">
+        <div th:each="error : ${#fields.errors('rentTo')}" th:text="${error}"></div>
     </div>
 
     <!-- Price -->

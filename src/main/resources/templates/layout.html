@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" lang="pl">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
 
 <head>
     <meta charset="UTF-8">
@@ -20,7 +22,8 @@
     <script src="/js/script.js"></script>
 
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css"/>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -35,18 +38,32 @@
     <div class="row d-flex justify-content-center align-items-center" style="height: 100vh;">
 
         <div class="col-10" style="border: 1px solid #fafafa">
-            <header>
-                <h1 class="page-header">Gear Rent</h1>
-            </header>
 
+            <!-- Header -->
+            <div th:replace="fragments/header-fragment :: header" class="col-md-6"></div>
+
+            <div th:if="${onLoginPage == null || !onLoginPage}">
+                <div th:if="${param.error}" class="alert alert-danger">
+                    Invalid username and password.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success" th:text="#{login.logoutSuccess.message}">
+                    You have been logged out.
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <div class="menu">
+                <a href="/">Strona główna</a>
+            </div>
+            <!-- Content -->
             <section layout:fragment="content">
                 <p>Page content</p>
             </section>
 
-            <!--<footer>
-                <p>Footer</p>
-                <p layout:fragment="custom-footer">Custom footer here</p>
-            </footer>-->
+            <!-- Footer -->
+            <footer class="custom-footer">
+                <p layout:fragment="custom-footer">&copy;2023</p>
+            </footer>
         </div>
     </div>
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Header</title>
+</head>
+<body>
+<!-- header-fragment.html -->
+<div th:fragment="header" class="page-header">
+    <header>
+        <div class="row">
+            <div class="col-md-6 text-left">
+                <h1>Gear Rent</h1>
+            </div>
+            <!-- Login -->
+            <div th:if="${onLoginPage == null || !onLoginPage}" class="col-md-6">
+                <div th:replace="fragments/login-fragment :: login-fragment" th:remove="tag"></div>
+            </div>
+        </div>
+    </header>
+</div>
+</body>
+</html>

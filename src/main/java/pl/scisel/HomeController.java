@@ -2,26 +2,27 @@ package pl.scisel;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import pl.scisel.item.Item;
-import pl.scisel.item.ItemRepository;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.ResponseBody;
+import pl.scisel.rental.RentalRepository;
 
 @Controller
-@RequestMapping("/")
 public class HomeController {
 
-    private final ItemRepository itemRepository;
+    private final RentalRepository rentalRepository;
 
-    HomeController(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
+    HomeController(RentalRepository rentalRepository) {
+        this.rentalRepository = rentalRepository;
     }
 
-    @RequestMapping("")
+    @RequestMapping("/")
     public String home(Model model) {
-        List<Item> all = itemRepository.findAll();
-        model.addAttribute("items", itemRepository.findAll());
-        return "item/list";
+        model.addAttribute("rentals", rentalRepository.findAll());
+        return "home/list";
     }
+
+    @GetMapping("/about")
+    @ResponseBody
+    public String about() { return "Here you can find some details for logged users"; }
 }
