@@ -9,6 +9,9 @@ h1 {color: dodgerblue; margin-bottom: 0}
     margin-bottom: 20px;
     border-bottom: 1px solid #eee;
 }
+.menu a {
+    margin-left: 20px;
+}
 .gradient {
     background: linear-gradient(to bottom, #eee, #fff);
 }
@@ -24,3 +27,12 @@ h1 {color: dodgerblue; margin-bottom: 0}
     border-top: 1px solid #eee;
 }
 table {width: 100%;}
+
+.fade-out {
+    animation: fadeOut 0.5s;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

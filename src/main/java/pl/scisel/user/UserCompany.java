@@ -1,7 +1,7 @@
 package pl.scisel.user;
 
 import jakarta.persistence.*;
-import pl.scisel.entity.User;
+import pl.scisel.user.User;
 
 @Entity
 public class UserCompany {

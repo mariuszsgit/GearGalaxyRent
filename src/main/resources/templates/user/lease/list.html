@@ -12,34 +12,38 @@
     <div class="row">
 
         <div class="col-md-9">
-            <h2 th:text="#{app.rental.header}"></h2>
+            <h2 th:text="#{app.rental.leaser.header}"></h2>
         </div>
-        <div class="col-md-3 text-right">
-            <a th:href="@{/user/rental/add}" class="btn btn-success">
-                <i class="fa fa-plus"></i> <span th:text="#{app.rental.button.add}" th:remove="tag">Dodaj</span>
-            </a>
-        </div>
+        <div class="col-md-3 text-right"></div>
     </div>
     <table class="table">
         <thead>
         <tr>
-            <th>ID</th>
+            <th>Nr</th>
             <th>Data Wypożyczenia</th>
             <th>Cena</th>
             <th>Status</th>
             <th>Właściciel</th>
+            <th>Przedmiot</th>
             <th>Akcje</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="lease : ${leases}">
-            <td th:text="${lease.id}"></td>
+        <tr th:each="lease, status : ${leases}">
+            <td th:text="${status.index + 1}"></td>
             <td th:text="${#temporals.format(lease.created, 'dd-MM-yyyy HH:mm')}"></td>
-            <td th:text="${lease.price != null ? lease.price : 0} PLN"></td>
+            <td th:text="${lease.price != null ? lease.price : 0} + 'PLN'"></td>
+
             <td th:text="#{${'app.rental.status.' + lease.rentalStatus}}"></td>
-            <td th:text="${lease.item.owner.firstName} ${lease.item.owner.lastName}"></td>
+
+            <td th:if="${lease.item != null}" th:text="${lease.item.owner.firstName} + ' ' + ${lease.item.owner.lastName}"></td>
+            <!--<td th:text="${lease.item.owner.firstName} ${lease.item.owner.lastName}"></td>-->
+            <td th:if="${lease.item != null}" th:text="${lease.item.name}"></td>
             <td>
-                <!-- Dodaj tutaj odpowiednie akcje, np. przyciski do edycji lub usuwania wypożyczenia -->
+                <form th:action="@{/user/rental/return/{rentalId}(rentalId=${lease.id})}" method="post">
+                    <button type="submit" class="btn btn-primary" th:text="#{app.rental.button.return}">Return rented item</button>
+                </form>
+
             </td>
         </tr>
         </tbody>

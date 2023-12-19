@@ -1,25 +1,30 @@
 package pl.scisel.user;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import pl.scisel.entity.Item;
-import pl.scisel.entity.Rental;
-import pl.scisel.entity.User;
-import pl.scisel.repository.CategoryRepository;
-import pl.scisel.repository.ItemRepository;
-import pl.scisel.repository.RentalRepository;
-import pl.scisel.util.RentalStatus;
+import pl.scisel.category.CategoryRepository;
+import pl.scisel.item.Item;
+import pl.scisel.item.ItemRepository;
+import pl.scisel.rental.RentalRepository;
+import pl.scisel.security.CurrentUser;
+import pl.scisel.upload.UploadController;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,21 +32,25 @@ import java.util.Optional;
 
 @RequestMapping("/user")
 @Controller
-public class UserActivityController {
+public class UserItemController {
     private final ItemRepository itemRepository;
-    private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final RentalRepository rentalRepository;
-    private static final Logger logger = LoggerFactory.getLogger(UserActivityController.class);
+    private final CategoryRepository categoryRepository;
+    private final ImageStorageService imageStorageService;
 
-    UserActivityController(UserRepository userRepository,
-                           ItemRepository itemRepository,
-                           CategoryRepository categoryRepository,
-                           RentalRepository rentalRepository) {
+    private static final Logger logger = LoggerFactory.getLogger(UserItemController.class);
+
+    UserItemController(UserRepository userRepository,
+                       ItemRepository itemRepository,
+                       CategoryRepository categoryRepository,
+                       RentalRepository rentalRepository,
+                       ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
         this.rentalRepository = rentalRepository;
+        this.imageStorageService = imageStorageService;
     }
 
     // Get
@@ -64,16 +73,29 @@ public class UserActivityController {
 
     // Post
     @PostMapping("/item/add")
-    public String save(@Valid Item item, BindingResult result, Model model) {
+    public String save(@Valid Item item, BindingResult result, @RequestParam("file") MultipartFile file, Model model) {
+
         if (result.hasErrors()) {
             model.addAttribute("item", item);
+            return "/user/item/add";
+        }
+
+        try {
+            String filePath = imageStorageService.store(file); // Zapisz obraz i uzyskaj ścieżkę
+            item.setImageUrl(filePath); // Ustaw ścieżkę obrazu w obiekcie item
+        } catch (IOException e) {
+            model.addAttribute("errorMessage", "Błąd podczas zapisywania obrazu");
             return "/user/item/add";
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
         Long userId = currentUser.getUser().getId();
-        User user = userRepository.findById(userId).orElse(null);
+
+        // Sprawdzenie, czy użytkownik istnieje
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Nie znaleziono użytkownika o ID: " + userId));
+
         item.setOwner(user);
 
         itemRepository.save(item);
@@ -122,25 +144,46 @@ public class UserActivityController {
             return "redirect:/user/item/list";
         }
 
+        // Przekształć ścieżkę pliku na ścieżkę URL
+        String filename = Paths.get(item.getImageUrl()).getFileName().toString();
+        String imageUrl = MvcUriComponentsBuilder
+                .fromMethodName(UploadController.class, "serveFile", filename)
+                .build().toUri().toString();
+
+        model.addAttribute("imageUrl", imageUrl); // Dodaj ścieżkę URL do modelu
         model.addAttribute("item", item);
         model.addAttribute("categories", categoryRepository.findAll());
         return "user/item/edit";
     }
 
+
+    @GetMapping("/images/{filename:.+}")
+    @ResponseBody
+    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+        Resource file = imageStorageService.loadAsResource(filename);
+        if (file.exists() || file.isReadable()) {
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
+                    "inline; filename=\"" + file.getFilename() + "\"").body(file);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     // Post
     @PostMapping("/item/edit")
-    public String update(@Valid Item item, BindingResult result, Model model, @RequestParam(name = "id") Long id, RedirectAttributes redirectAttributes) {
+    public String update(@Valid Item itemUpdate, BindingResult result, Model model,
+                         @RequestParam(name = "id") Long id, @RequestParam("file") MultipartFile file,
+                         RedirectAttributes redirectAttributes) {
 
-        // Walidacja
-        if (result.hasErrors()) {
-            model.addAttribute("item", item);
-            return "user/item/edit";
-        }
-
-        // Uwierzytelnienie
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication.getPrincipal() instanceof CurrentUser)) {
             return "redirect:/login";
+        }
+
+        // Walidacja
+        if (result.hasErrors()) {
+            model.addAttribute("item", itemUpdate);
+            return "user/item/edit";
         }
 
         // Sprawdzenie, czy przedmiot istnieje, ok
@@ -152,31 +195,14 @@ public class UserActivityController {
 
         CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
         User user = currentUser.getUser();
-        Long userId = currentUser.getUser().getId();
+        Long userId = user.getId();
 
+        Item item = itemOptional.get();
         try {
-            Item itemEdited = itemOptional.get();
-
-            item = itemOptional.get();
-            User owner = item.getOwner();
-            if (owner == null || !owner.getId().equals(userId)) {
+            // Czy zalogowany użytkownik jest właścicielem item
+            if (item.getOwner() == null || !item.getOwner().getId().equals(userId)) {
                 throw new SecurityException("User does not have permission to delete this item.");
             }
-
-            // Sprawdź, czy zalogowany użytkownik jest właścicielem elementu
-            if (itemEdited.getOwner() == null || !itemEdited.getOwner().getId().equals(userId)) {
-                redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
-                return "redirect:/user/item/list";
-            }
-
-            // Aktualizuj dane elementu
-            itemEdited.setId(item.getId());
-            itemEdited.setName(item.getName());
-            itemEdited.setDescription(item.getDescription());
-            itemEdited.setCategory(item.getCategory());
-
-            // Zapisz zmiany
-            itemRepository.save(itemEdited);
         } catch (SecurityException e) {
             // Obsługa wyjątku
             redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
@@ -185,6 +211,25 @@ public class UserActivityController {
             return "redirect:/user/item/list";
         }
 
+        try {
+            if (!file.isEmpty()) {
+                String filePath = imageStorageService.store(file);
+                item.setImageUrl(filePath); // Zaktualizuj URL obrazu
+            }
+        } catch (IOException e) {
+            // Obsługa wyjątku, np. zapisanie informacji o błędzie w modelu
+            model.addAttribute("uploadError", "Error occurred while uploading file.");
+            model.addAttribute("item", itemUpdate);
+            return "user/item/edit";
+        }
+        // Aktualizuj dane Item
+        item.setId(itemUpdate.getId());
+        item.setName(itemUpdate.getName());
+        item.setDescription(itemUpdate.getDescription());
+        item.setCategory(itemUpdate.getCategory());
+
+        // Zapisz zmiany
+        itemRepository.save(item);
         return "redirect:/user/item/list";
     }
 
@@ -238,73 +283,6 @@ public class UserActivityController {
         }
 
         return "redirect:/user/item/list";
-    }
-
-    // Add Get
-    @RequestMapping(value = {"/rental/add", "/rental/add/{itemId}"}, method = RequestMethod.GET)
-    public String addRental(@PathVariable Optional<Long> itemId,Model model, Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        User user = currentUser.getUser();
-        Long userId = user.getId();
-
-
-        Rental rental = new Rental();
-        rental.setRentFrom(LocalDateTime.now());
-        rental.setRentTo(LocalDateTime.now());
-        rental.setPrice(BigDecimal.valueOf(0));
-
-        List<Item> userItems = itemRepository.findByOwnerId(userId);
-
-        // itemId istnieje
-        if (itemId.isPresent()) {
-            Optional<Item> optionalItem = itemRepository.findByIdAndOwnerId(itemId.get(), userId);
-            if (optionalItem.isPresent()) {
-                rental.setItem(optionalItem.get());
-                model.addAttribute("selectedItemId", optionalItem.get().getId());
-            }
-            else {
-                return "redirect://user/rental/list";
-            }
-        }
-
-        model.addAttribute("items", userItems); // itemy użytkownika
-        model.addAttribute("rental", rental);
-        model.addAttribute("allStatuses", RentalStatus.values());
-
-        return "user/rental/add";
-    }
-
-    // Add Post
-    @PostMapping("/rental/add")
-    public String save(@Valid Rental rental, BindingResult result, Model model) {
-        if (result.hasErrors()) {
-            model.addAttribute("rental", rental);
-            return "user/rental/add";
-        }
-
-        rentalRepository.save(rental);
-        return "redirect:/user/rental/list";
-    }
-
-    @RequestMapping("/rental/list")
-    public String listRentals(Model model) {
-
-        // Uwierzytelnienie
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        Long userId = currentUser.getUser().getId();
-
-        List<Rental> rentals = rentalRepository.findByItemOwnerId(userId); // Pobierz wynajmy, które zawierają przedmioty należące do zalogowanego użytkownika
-        model.addAttribute("rentals", rentals);
-        return "user/rental/list";
     }
 
 }

@@ -14,8 +14,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
+@ToString(exclude = "rentals") // Wykluczenie powiązanej listy
+@EqualsAndHashCode(exclude = "rentals") // Podobnie, wykluczając powiązane listy
 @Table(name = "items")
 public class Item {
 
@@ -35,6 +36,9 @@ public class Item {
 
     @ManyToOne
     private Category category;
+
+    //@ManyToOne(optional = false)
+    //@JoinColumn(name = "owner_id", nullable = false)
 
     @ManyToOne
     @JoinColumn(name = "owner_id")

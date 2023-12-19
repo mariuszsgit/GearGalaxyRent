@@ -1,8 +1,12 @@
 package pl.scisel.user;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -10,28 +14,28 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import pl.scisel.entity.Item;
-import pl.scisel.entity.Rental;
-import pl.scisel.entity.User;
-import pl.scisel.repository.CategoryRepository;
-import pl.scisel.repository.ItemRepository;
-import pl.scisel.repository.RentalRepository;
+import pl.scisel.item.Item;
+import pl.scisel.rental.Rental;
+import pl.scisel.category.CategoryRepository;
+import pl.scisel.item.ItemRepository;
+import pl.scisel.rental.RentalRepository;
+import pl.scisel.security.CurrentUser;
 import pl.scisel.util.RentalStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 
 @RequestMapping("/user")
 @Controller
 public class UserRentalController {
     private final ItemRepository itemRepository;
-    private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final RentalRepository rentalRepository;
+    @Autowired
+    private MessageSource messageSource;
     private static final Logger logger = LoggerFactory.getLogger(UserRentalController.class);
 
     UserRentalController(UserRepository userRepository,
@@ -40,209 +44,12 @@ public class UserRentalController {
                          RentalRepository rentalRepository) {
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
-        this.categoryRepository = categoryRepository;
         this.rentalRepository = rentalRepository;
-    }
-
-    // Get
-    @RequestMapping("/item/add")
-    public String add(Model model) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getPrincipal() instanceof CurrentUser) {
-            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-            Long userId = currentUser.getUser().getId();
-
-        } else {
-            return "redirect:/login";
-        }
-
-        model.addAttribute("item", new Item());
-        model.addAttribute("categories", categoryRepository.findAll());
-        return "/user/item/add";
-    }
-
-    // Post
-    @PostMapping("/item/add")
-    public String save(@Valid Item item, BindingResult result, Model model) {
-        if (result.hasErrors()) {
-            model.addAttribute("item", item);
-            return "/user/item/add";
-        }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        Long userId = currentUser.getUser().getId();
-        User user = userRepository.findById(userId).orElse(null);
-        item.setOwner(user);
-
-        itemRepository.save(item);
-        return "redirect:/user/item/list";
-    }
-
-    @RequestMapping("/item/list")
-    public String list(Model model) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getPrincipal() instanceof CurrentUser) {
-            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-            Long userId = currentUser.getUser().getId();
-
-            // Pobierz przedmioty należące do zalogowanego użytkownika
-            List<Item> items = itemRepository.findByOwnerId(userId);
-            model.addAttribute("items", items);
-        } else {
-            return "redirect:/login";
-        }
-        return "user/item/list";
-    }
-
-    // Get
-    @RequestMapping("/item/edit/{id}")
-    public String edit(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
-            // Jeśli użytkownik nie jest zalogowany, przekieruj do strony logowania
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        User loggedInUser = currentUser.getUser();
-
-        Optional<Item> itemOptional = itemRepository.findById(id);
-        if (!itemOptional.isPresent()) {
-            // Jeśli przedmiot nie istnieje
-            redirectAttributes.addFlashAttribute("error", "error.item.cannot.edit.notFound");
-            return "redirect:/user/item/list";
-        }
-
-        Item item = itemOptional.get();
-        if (!item.getOwner().getId().equals(loggedInUser.getId())) {
-            // Jeśli użytkownik nie jest właścicielem przedmiotu
-            redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
-            return "redirect:/user/item/list";
-        }
-
-        model.addAttribute("item", item);
-        model.addAttribute("categories", categoryRepository.findAll());
-        return "user/item/edit";
-    }
-
-    // Post
-    @PostMapping("/item/edit")
-    public String update(@Valid Item item, BindingResult result, Model model, @RequestParam(name = "id") Long id, RedirectAttributes redirectAttributes) {
-
-        // Walidacja
-        if (result.hasErrors()) {
-            model.addAttribute("item", item);
-            return "user/item/edit";
-        }
-
-        // Uwierzytelnienie
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        // Sprawdzenie, czy przedmiot istnieje, ok
-        Optional<Item> itemOptional = itemRepository.findById(id);
-        if (itemOptional.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "error.item.cannot.edit.notFound");
-            return "redirect:/user/item/list";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        User user = currentUser.getUser();
-        Long userId = currentUser.getUser().getId();
-
-        try {
-            Item itemEdited = itemOptional.get();
-
-            item = itemOptional.get();
-            User owner = item.getOwner();
-            if (owner == null || !owner.getId().equals(userId)) {
-                throw new SecurityException("User does not have permission to delete this item.");
-            }
-
-            // Sprawdź, czy zalogowany użytkownik jest właścicielem elementu
-            if (itemEdited.getOwner() == null || !itemEdited.getOwner().getId().equals(userId)) {
-                redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
-                return "redirect:/user/item/list";
-            }
-
-            // Aktualizuj dane elementu
-            itemEdited.setId(item.getId());
-            itemEdited.setName(item.getName());
-            itemEdited.setDescription(item.getDescription());
-            itemEdited.setCategory(item.getCategory());
-
-            // Zapisz zmiany
-            itemRepository.save(itemEdited);
-        } catch (SecurityException e) {
-            // Obsługa wyjątku
-            redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
-            System.out.println("Security exception: " + e.getMessage());
-            logger.error("Security exception: " + e.getMessage());
-            return "redirect:/user/item/list";
-        }
-
-        return "redirect:/user/item/list";
-    }
-
-    // Delete
-    @GetMapping("/item/delete/{id}")
-    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        Map<String, String> itemErrors = new HashMap<>();
-
-        // Uwierzytelnienie
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        Long userId = currentUser.getUser().getId();
-
-        // Sprawdzenie, czy przedmiot istnieje, ok
-        Optional<Item> itemOptional = itemRepository.findById(id);
-        if (itemOptional.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "error.item.cannot.delete.notFound");
-            return "redirect:/user/item/list";
-        }
-
-        // Sprawdzenie, czy przedmiot należy do zalogowanego użytkownika
-        // Wyjątek dla security exception
-        try {
-            Item item = itemOptional.get();
-            User owner = item.getOwner();
-            User user = currentUser.getUser();
-            String username = user.getUsername();
-            if (owner == null || !owner.getId().equals(userId)) {
-                throw new SecurityException("User " + username + " (ID: " + userId + ") does not have permission to delete this item.");
-            }
-
-            // Sprawdzenie, czy istnieją powiązane wynajmy
-            boolean hasRentals = rentalRepository.existsByItemId(item.getId());
-            if (hasRentals) {
-                itemErrors.put("errorDeleteItemMessage", "error.item.cannot.delete.rentals");
-                itemErrors.put("errorDeleteItemId", id.toString());
-                redirectAttributes.addFlashAttribute("itemErrors", itemErrors);
-                return "redirect:/user/item/list";
-            }
-
-            itemRepository.delete(item);
-            redirectAttributes.addFlashAttribute("success", true);
-        } catch (SecurityException e) {
-            redirectAttributes.addFlashAttribute("error", "error.item.no.permission");
-            System.out.println("Security exception: " + e.getMessage());
-            logger.error("Security exception: " + e.getMessage());
-        }
-
-        return "redirect:/user/item/list";
     }
 
     // Add Get
     @RequestMapping(value = {"/rental/add", "/rental/add/{itemId}"}, method = RequestMethod.GET)
-    public String addRental(@PathVariable Optional<Long> itemId,Model model, Authentication authentication) {
+    public String addRental(@PathVariable Optional<Long> itemId, Model model, Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof CurrentUser)) {
             return "redirect:/login";
         }
@@ -250,7 +57,6 @@ public class UserRentalController {
         CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
         User user = currentUser.getUser();
         Long userId = user.getId();
-
 
         Rental rental = new Rental();
         rental.setRentFrom(LocalDateTime.now());
@@ -265,8 +71,7 @@ public class UserRentalController {
             if (optionalItem.isPresent()) {
                 rental.setItem(optionalItem.get());
                 model.addAttribute("selectedItemId", optionalItem.get().getId());
-            }
-            else {
+            } else {
                 return "redirect://user/rental/list";
             }
         }
@@ -276,6 +81,83 @@ public class UserRentalController {
         model.addAttribute("allStatuses", RentalStatus.values());
 
         return "user/rental/add";
+    }
+
+    //
+    // Edit GET
+    //
+    @RequestMapping("/rental/edit/{rentalId}")
+    public String editRental(@PathVariable Long rentalId, Model model, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CurrentUser)) {
+            return "redirect:/login";
+        }
+
+        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+        User user = currentUser.getUser();
+        Long userId = user.getId();
+
+        // Sprawdź, czy użytkownik ma dostęp do edycji tego wynajmu
+        Optional<Rental> optionalRental = rentalRepository.findById(rentalId);
+
+        if (optionalRental.isPresent()) {
+            Rental rental = optionalRental.get();
+            Item rentalItem = rental.getItem();
+
+            if (rentalItem == null || rentalItem.getOwner() == null || !rentalItem.getOwner().getId().equals(userId)) {
+                // Przedmiot nie należy do zalogowanego użytkownika
+                return "redirect:/user/rental/list";
+            }
+
+            // Uzyskaj listę przedmiotów użytkownika
+            List<Item> userItems = itemRepository.findByOwnerId(user.getId());
+
+            model.addAttribute("selectedItemId", rentalItem.getId());
+            model.addAttribute("items", userItems); // itemy użytkownika
+            model.addAttribute("rental", rental);
+            model.addAttribute("allStatuses", RentalStatus.values());
+
+            return "user/rental/edit";
+        } else {
+            // Wynajem o podanym ID nie istnieje
+            return "redirect:/user/rental/list";
+        }
+    }
+
+    //
+    // Edit Post
+    //
+    @PostMapping("/rental/edit")
+    public String updateRental(@Valid Rental rental,
+                               BindingResult result, Model model,
+                               @RequestParam(name = "id") Long id) {
+
+        if (rental.getRentFrom() != null && rental.getRentTo() != null) {
+            if (rental.getRentTo().isBefore(rental.getRentFrom())) {
+                Locale currentLocale = LocaleContextHolder.getLocale();
+                String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
+                result.rejectValue("rentTo", "error.rentTo", errorMessage);
+            }
+        }
+
+        if (result.hasErrors()) {
+            model.addAttribute("rental", rental);
+            model.addAttribute("allStatuses", RentalStatus.values());
+            model.addAttribute("items", itemRepository.findAll());
+            return "user/rental/edit";
+        }
+        Optional<Rental> rentalOptional = rentalRepository.findById(id);
+        if (rentalOptional.isPresent()) {
+            Rental rentalEdited = rentalOptional.get();
+            rentalEdited.setId(rental.getId());
+            rentalEdited.setPrice(rental.getPrice());
+            rentalEdited.setRentFrom(rental.getRentFrom());
+            rentalEdited.setRentTo(rental.getRentTo());
+            rentalEdited.setRentalStatus(rental.getRentalStatus());
+            rentalEdited.setItem(rental.getItem());
+            rentalRepository.save(rentalEdited);
+        }
+
+        return "redirect:/user/rental/list";
     }
 
     // Add Post
@@ -290,6 +172,7 @@ public class UserRentalController {
         return "redirect:/user/rental/list";
     }
 
+
     @RequestMapping("/rental/list")
     public String listRentals(Model model) {
 
@@ -303,8 +186,99 @@ public class UserRentalController {
         Long userId = currentUser.getUser().getId();
 
         List<Rental> rentals = rentalRepository.findByItemOwnerId(userId); // Pobierz wynajmy, które zawierają przedmioty należące do zalogowanego użytkownika
+
+        // Dla każdego wynajmu, pobierz przypisany przedmiot i dodaj jego nazwę i opis do wynajmu
+        for (Rental rental : rentals) {
+            Item rentalItem = rental.getItem();
+            if (rentalItem != null) {
+                //rental.setRentalItemName(rentalItem.getName());
+                //rental.setRentalItemDescription(rentalItem.getDescription());
+            }
+        }
+
         model.addAttribute("rentals", rentals);
         return "user/rental/list";
+    }
+
+    @RequestMapping("/rental/lease/{rentalId}")
+    public String leaseRental(@PathVariable Long rentalId, Model model, Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
+            return "redirect:/login";
+        }
+
+        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+
+        // Pobierz zalogowanego użytkownika (user2)
+        User user2 = currentUser.getUser();
+
+        // Pobierz wynajem, który ma być wypożyczony
+        Optional<Rental> optionalRental = rentalRepository.findById(rentalId);
+
+        if (optionalRental.isPresent()) {
+            Rental rental = optionalRental.get();
+            Item rentalItem = rental.getItem();
+            User user1 = rentalItem.getOwner(); // Pobierz właściciela przedmiotu
+
+            // Sprawdź, czy użytkownik (user2) nie jest właścicielem przedmiotu wynajmu
+            if (!user1.equals(user2)) {
+                // Przypisz wypożyczenie (rental) do użytkownika (user2)
+                rental.setLeaser(user2);
+                rental.setRentalStatus(RentalStatus.RENTED);
+                rentalRepository.save(rental);
+
+                // Przekieruj na stronę z listą wynajmów
+                return "redirect:/user/lease/list";
+            }
+        }
+
+        // Jeśli wynajem nie istnieje lub użytkownik jest właścicielem wynajmu, przekieruj na /
+        return "redirect:/";
+    }
+
+    @RequestMapping("/lease/list")
+    public String listLeasedItems(Model model, Authentication authentication) {
+        if (authentication.getPrincipal() instanceof CurrentUser) {
+            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+            Long leaserId = currentUser.getUser().getId();
+            User owner = currentUser.getUser(); // To może być inny użytkownik niż zalogowany
+
+            List<Rental> leasedItems = rentalRepository.findByLeaserIdAndItemOwnerNot(leaserId, owner);
+            model.addAttribute("leases", leasedItems);
+
+            return "user/lease/list";
+        } else {
+            return "redirect:/login";
+        }
+    }
+
+    @GetMapping("/rental/delete/{id}")
+    public String delete(@PathVariable Long id) {
+
+        Optional<Rental> rentalOptional = rentalRepository.findById(id);
+        if (rentalOptional.isPresent()) {
+            Rental rental = rentalOptional.get();
+            rentalRepository.delete(rental);
+        }
+        return "redirect:/user/rental/list";
+    }
+
+    @PostMapping("/rental/return/{rentalId}")
+    public String returnRental(@PathVariable Long rentalId, Authentication authentication, RedirectAttributes redirectAttributes) {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new EntityNotFoundException("Rental not found with id: " + rentalId));
+
+        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+        if (!rental.getLeaser().getId().equals(currentUser.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to return this rental.");
+            return "redirect:/user/lease/list";
+        }
+
+        rental.setRentalStatus(RentalStatus.AVAILABLE);
+        rental.setLeaser(null); // Usunięcie przypisania użytkownika do wypożyczenia
+        rentalRepository.save(rental);
+
+        redirectAttributes.addFlashAttribute("success", "Item returned successfully.");
+        return "redirect:/user/lease/list";
     }
 
 }

@@ -1,4 +1,4 @@
-package pl.scisel.user;
+package pl.scisel.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -6,6 +6,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import pl.scisel.security.CurrentUser;
+import pl.scisel.user.User;
+import pl.scisel.user.UserService;
 
 import java.util.HashSet;
 import java.util.Set;

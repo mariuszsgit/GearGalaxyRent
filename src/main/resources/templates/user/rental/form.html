@@ -92,13 +92,14 @@
         <label for="items">
             <span th:text="#{app.item.list}">Items</span>
         </label>
+        <!--<select th:field="*{item}" class="form-control">-->
         <select id="items" name="item.id" class="form-control">
-            <option th:value="0" th:text="#{app.item.choose}">Wybierz przedmiot</option>
+        <option value="0" th:selected="${selectedItemId == null}" th:text="#{app.item.choose}">Choose Item</option>
             <option th:each="item : ${items}"
                     th:value="${item.id}"
                     th:text="${item.name}"
-                    th:selected="${rental.item != null and item.id == rental.item.id}">
-            </option>
+                    th:selected="${item.id == selectedItemId}"></option>
+                <!--th:selected="${rental.item != null and item.id == rental.item.id}">-->
         </select>
 
     </div>
@@ -106,7 +107,7 @@
     <!-- Submit -->
     <div class="form-group">
         <button type="submit" class="btn btn-primary" th:text="#{button.save}">Save</button>
-        <a th:href="@{/rental/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
+        <a th:href="@{/user/rental/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
     </div>
 </div>
 </body>

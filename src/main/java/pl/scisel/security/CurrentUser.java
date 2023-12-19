@@ -1,4 +1,4 @@
-package pl.scisel.user;
+package pl.scisel.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;

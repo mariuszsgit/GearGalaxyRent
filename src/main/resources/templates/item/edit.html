@@ -11,8 +11,9 @@
     <form method="post" id="edit-item-form"
           th:action="@{/item/edit}" th:object="${item}"
           class="form-horizontal form-label-left">
-            <input type="hidden" th:field="${item.id}" />
-    <div th:replace="~{item/form :: div}"></div>
+        <input type="hidden" th:field="${item.id}"/>
+        <div th:replace="~{/item/form :: div}"></div>
+    </form>
 </section>
 </body>
 </html>

@@ -8,11 +8,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import pl.scisel.category.CategoryRepository;
-import pl.scisel.entity.Item;
-import pl.scisel.entity.User;
-import pl.scisel.user.CurrentUser;
+import pl.scisel.user.User;
+import pl.scisel.security.CurrentUser;
 import pl.scisel.user.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -32,6 +32,13 @@ public class ItemController {
     // Get
     @RequestMapping("/add")
     public String add(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof CurrentUser) {
+            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+            Long userId = currentUser.getUser().getId();
+        } else {
+            return "redirect:/login";
+        }
         model.addAttribute("item", new Item());
         model.addAttribute("categories", categoryRepository.findAll());
         return "item/add";
@@ -84,10 +91,21 @@ public class ItemController {
 
     @RequestMapping("/list")
     public String list(Model model) {
-        model.addAttribute("items", itemRepository.findAll());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof CurrentUser) {
+            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+            Long userId = currentUser.getUser().getId();
+
+            // Pobierz przedmioty należące do zalogowanego użytkownika
+            List<Item> items = itemRepository.findByOwnerId(userId);
+            model.addAttribute("items", items);
+        } else {
+            return "redirect:/login";
+        }
         return "item/list";
     }
 
+    // Delete
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
 

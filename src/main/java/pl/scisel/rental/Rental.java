@@ -6,6 +6,7 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import pl.scisel.item.Item;
 import pl.scisel.user.User;
+import pl.scisel.util.RentalStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +16,6 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
 @Table(name = "rentals")
 public class Rental {
@@ -35,7 +35,7 @@ public class Rental {
     @NotNull
     @Digits (integer = 10, fraction = 2, message = "rental.quantity.digits.message")
     @DecimalMin(value = "0.00", message = "rental.price.min.message")
-    @DecimalMax(value = "10000.00", message = "rental.price.max.message")
+    @DecimalMax(value = "100000.00", message = "rental.price.max.message")
     private BigDecimal price;
 
     @NotNull(message = "{rental.rentFrom.notNull.message}")

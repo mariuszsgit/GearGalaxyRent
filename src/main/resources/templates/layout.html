@@ -37,10 +37,23 @@
 <div class="container">
     <div class="row d-flex justify-content-center align-items-center" style="height: 100vh;">
 
-        <div class="col-10" style="border: 1px solid #fafafa">
+        <div class="col-12" style="border: 1px solid #fafafa">
 
             <!-- Header -->
-            <div th:replace="fragments/header-fragment :: header" class="col-md-6"></div>
+            <div th:replace="~{fragments/header-fragment :: header}" class="col-md-6"></div>
+            <!-- Menu -->
+            <div class="row menu">
+                <div class="col-md-6">
+                    <a href="/"><i class="fas fa-home"></i> Strona główna</a>
+                </div>
+                <div class="col-md-6 text-right">
+                    <a href="/user/item/list"><i class="fas fa-list"></i> Moje Przedmioty</a>
+                    <a href="/user/rental/list"><i class="fas fa-list"></i> Moje Wynajmy</a>
+                    <a href="/user/lease/list"><i class="fas fa-list"></i> Moje Wypożyczenia</a>
+
+                </div>
+
+            </div>
 
             <div th:if="${onLoginPage == null || !onLoginPage}">
                 <div th:if="${param.error}" class="alert alert-danger">
@@ -51,10 +64,6 @@
                 </div>
             </div>
 
-            <!-- Menu -->
-            <div class="menu">
-                <a href="/">Strona główna</a>
-            </div>
             <!-- Content -->
             <section layout:fragment="content">
                 <p>Page content</p>

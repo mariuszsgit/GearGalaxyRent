@@ -2,8 +2,9 @@ package pl.scisel.user;
 
 import jakarta.persistence.*;
 import lombok.*;
-import pl.scisel.item.Item;
 import pl.scisel.rental.Rental;
+import pl.scisel.item.Item;
+import pl.scisel.security.Role;
 
 import java.util.List;
 import java.util.Set;
@@ -13,7 +14,6 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
 @Table(name = "users")
 public class User {

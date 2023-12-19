@@ -1,8 +1,8 @@
-package pl.scisel.user;
+package pl.scisel.security;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import pl.scisel.entity.Role;
+import pl.scisel.security.Role;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Integer> {

@@ -1,4 +1,4 @@
-package pl.scisel.user;
+package pl.scisel.security;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +8,6 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
 public class Role {
     @Id

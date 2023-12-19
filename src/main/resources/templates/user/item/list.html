@@ -12,32 +12,68 @@
     <div class="row">
 
         <div class="col-md-9">
-            <h2 th:text="#{app.item.header}"></h2>
+            <h2 th:text="#{app.item.myItems.header}"></h2>
         </div>
         <div class="col-md-3 text-right">
-            <a th:href="@{/item/add}" class="btn btn-success align" th:text="#{app.item.button.add}"></a>
+            <a th:href="@{/user/item/add}" class="btn btn-success align" th:text="#{app.item.button.add}"></a>
         </div>
     </div>
+
+    <!-- Messages -->
+
+    <div th:if="${error}" class="alert alert-danger">
+        <p th:text="#{${error}}" th:remove="tag">Error message</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="#{item.delete.success.message}">
+        Delete success.
+    </div>
+
+<!--    <div th:if="${generalErrors}" class="alert alert-danger">
+        <span th:text="#{${generalErrors['errorDeleteItemMessage']}}">Delete error</span>
+    </div>-->
+
     <table width="100%">
         <thead>
         <tr>
             <th th:text="#{app.id}">
-            <th th:text="#{app.name}">
-            <th th:text="#{app.description}">
-            <th th:text="#{app.action}" th:colspan="2">
+            <th th:text="nic" th:colspan="2">
         </tr>
         </thead>
         <tbody>
         <tr th:each="item, status : ${items}">
             <td th:text="${status.index + 1}"></td>
-            <td th:text="${item.name}"></td>
-            <td th:text="${item.description}"></td>
-            <td th:align="right">
-                <a th:href="@{/item/edit/{id}(id=${item.id})}" th:text="#{app.button.edit}"
+            <td>
+
+                <h3 th:text="${item.name}"></h3>
+                <p th:text="${item.description}"></p>
+                <p th:text="${item.category?.name}"></p>
+                <p th:text="${item.category?.name} ?: 'Empty category'">Empty category</p>
+                <!--<p th:text="${item.price} + ' PLN'"></p>-->
+
+                <!-- Error messages -->
+
+                <div th:if="${itemErrors != null and itemErrors['errorDeleteItemId'] == item.id.toString()}">
+                    <div class="alert alert-danger">
+                        <span th:text="#{${itemErrors['errorDeleteItemMessage']}}">Komunikat błędu przedmiotu</span>
+                    </div>
+                </div>
+
+
+                <!-- Buttons -->
+                <a th:href="@{/user/item/edit/{id}(id=${item.id})}" th:text="#{app.button.edit}"
                    class="btn btn-primary">Edit</a>
                 <a href="#" th:data-category-id="${item.id}" th:text="#{app.button.delete}"
-                   th:data-delete-path="@{'/item/delete/' + ${item.id}}"
-                   class="btn btn-danger delete-button">Usuń</a>
+                   th:data-delete-path="@{'/user/item/delete/' + ${item.id}}"
+                   class="btn btn-danger delete-button">Delete</a>
+
+                <a th:href="@{/user/rental/add/{id}(id=${item.id})}" th:text="#{app.rental.button.addRental}"
+                   class="btn btn-success">Delete</a>
+
+            </td>
+            <td>
+                <img th:if="${item.imageUrl}" th:src="@{/images/{filename}(filename=${item.imageUrl})}" alt="Obraz przedmiotu" style="max-width: 100px; max-height: 100px;"/>
+                <img th:unless="${item.imageUrl}" th:src="@{/images/missingPhoto.png}" alt="Brak obrazu" style="max-width: 100px; max-height: 100px;"/>
             </td>
         </tr>
         </tbody>
