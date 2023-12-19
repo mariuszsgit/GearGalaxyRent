@@ -1,11 +1,17 @@
 package pl.scisel.item;
 
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import pl.scisel.category.CategoryRepository;
+import pl.scisel.entity.Item;
+import pl.scisel.entity.User;
+import pl.scisel.user.CurrentUser;
+import pl.scisel.user.UserRepository;
 
 import java.util.Optional;
 
@@ -15,10 +21,12 @@ public class ItemController {
 
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
-    ItemController(ItemRepository itemRepository, CategoryRepository categoryRepository) {
-        this.itemRepository = itemRepository;
+    ItemController(ItemRepository itemRepository, CategoryRepository categoryRepository, UserRepository userRepository) {
+        this.itemRepository=itemRepository;
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
     }
 
     // Get
@@ -36,6 +44,13 @@ public class ItemController {
             model.addAttribute("item", item);
             return "item/add";
         }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+        Long userId = currentUser.getUser().getId();
+        User user = userRepository.findById(userId).orElse(null);
+        item.setOwner(user);
+
         itemRepository.save(item);
         return "redirect:/item/list";
     }

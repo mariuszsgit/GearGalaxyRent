@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:fragment="pageTitle" th:text="#{app.rental.list}">Rental list</title>
+</head>
+<body>
+<section layout:fragment="content">
+
+    <div class="row">
+
+        <div class="col-md-9">
+            <h2 th:text="#{app.rental.header}"></h2>
+        </div>
+        <div class="col-md-3 text-right">
+            <a th:href="@{/user/rental/add}" class="btn btn-success">
+                <i class="fa fa-plus"></i> <span th:text="#{app.rental.button.add}" th:remove="tag">Dodaj</span>
+            </a>
+        </div>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Data Wypożyczenia</th>
+            <th>Cena</th>
+            <th>Status</th>
+            <th>Właściciel</th>
+            <th>Akcje</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="lease : ${leases}">
+            <td th:text="${lease.id}"></td>
+            <td th:text="${#temporals.format(lease.created, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:text="${lease.price != null ? lease.price : 0} PLN"></td>
+            <td th:text="#{${'app.rental.status.' + lease.rentalStatus}}"></td>
+            <td th:text="${lease.item.owner.firstName} ${lease.item.owner.lastName}"></td>
+            <td>
+                <!-- Dodaj tutaj odpowiednie akcje, np. przyciski do edycji lub usuwania wypożyczenia -->
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" role="dialog"
+         aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Potwierdzenie usunięcia</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Czy na pewno chcesz usunąć ten Wynajem?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                    <a id="deleteLink" class="btn btn-danger" href="">Tak, usuń</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{app.rental.header.add}">Add rental</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="#{app.rental.header.add}">Add rental</h2>
+    <form method="post" id="add-item-form"
+          th:action="@{/rental/add}" th:object="${rental}"
+          class="form-horizontal form-label-left">
+        <div th:replace="~{rental/form :: div}" th:remove="tag"></div>
+    </form>
+</section>
+</body>
+</html>

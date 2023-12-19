@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{app.item.header.add}">Form item</title>
+</head>
+<body>
+<div th:object="${item}" th:remove="tag">
+    <div class="form-group">
+        <label class="control-label" th:for="name">
+            <span th:remove="tag" th:text="#{app.item.name}"></span>
+            <span class="required">*</span>
+        </label>
+        <input th:field="*{name}" type="text" required="required"
+               class="form-control col-md-12 col-xs-12" th:id="name" id="name"/>
+    </div>
+    <div th:if="${#fields.hasErrors('name')}" class="alert alert-danger">
+        <div th:each="error : ${#fields.errors('name')}" th:utext="${error}"></div>
+    </div>
+    <!-- Description -->
+    <div class="form-group">
+        <label class="control-label" th:for="textarea">
+            <span th:remove="tag" th:text="#{app.item.description}">Item description</span>
+            <span class="required">*</span>
+        </label>
+        <textarea th:field="*{description}" maxlength="600" rows="4" cols="50"
+                  class="form-control col-md-12 col-xs-12"></textarea>
+    </div>
+
+    <div th:if="${#fields.hasErrors('description')}" class="alert alert-danger">
+        <div th:each="error : ${#fields.errors('description')}" th:utext="${error}"></div>
+        <div th:if="*{description != null}">
+            <span th:utext="#{app.charCount.message}"></span>
+            <span th:text="${#strings.length(item.description)}" th:class="font-weight-bold"></span>
+        </div>
+    </div>
+
+    <!-- Image -->
+    <div class="form-group">
+        <label class="control-label" th:for="image">
+            <span th:remove="tag" th:text="#{app.item.image}"></span>
+            <span class="required">*</span>
+        </label>
+        <input th:field="*{imageUrl}" type="text" required="required"
+               class="form-control col-md-12 col-xs-12" th:id="image" id="image"/>
+    </div>
+
+    <!-- Category -->
+    <div class="form-group">
+        <label for="category">Wybierz kategorię:</label>
+        <select id="category" name="category" class="form-control">
+            <option th:value="0" th:text="#{app.category.list}"></option>
+            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"
+                    th:selected="${item.category != null and category.id eq item.category.id}"></option>
+        </select>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" th:text="#{button.save}">Save</button>
+        <a th:href="@{/item/list}" th:text="#{app.button.back}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+</body>
+</html>
