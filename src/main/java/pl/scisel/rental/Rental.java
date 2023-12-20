@@ -35,7 +35,7 @@ public class Rental {
     @NotNull
     @Digits (integer = 10, fraction = 2, message = "rental.quantity.digits.message")
     @DecimalMin(value = "0.00", message = "rental.price.min.message")
-    @DecimalMax(value = "100000.00", message = "rental.price.max.message")
+    @DecimalMax(value = "1000000.00", message = "rental.price.max.message")
     private BigDecimal price;
 
     @NotNull(message = "{rental.rentFrom.notNull.message}")

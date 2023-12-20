@@ -14,10 +14,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import pl.scisel.item.Item;
-import pl.scisel.rental.Rental;
 import pl.scisel.category.CategoryRepository;
+import pl.scisel.email.EmailService;
+import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
+import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.security.CurrentUser;
 import pl.scisel.util.RentalStatus;
@@ -34,6 +35,9 @@ public class UserRentalController {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final RentalRepository rentalRepository;
+    @Autowired
+    private EmailService emailService;
+
     @Autowired
     private MessageSource messageSource;
     private static final Logger logger = LoggerFactory.getLogger(UserRentalController.class);
@@ -224,6 +228,11 @@ public class UserRentalController {
                 // Przypisz wypożyczenie (rental) do użytkownika (user2)
                 rental.setLeaser(user2);
                 rental.setRentalStatus(RentalStatus.RENTED);
+
+                // Wysyłanie emaila
+
+                emailService.sendSimpleMessage(user1.getEmail(), "email.rental.subject", "email.rental.body");
+                emailService.sendSimpleMessage(user2.getEmail(), "email.lease.subject", "email.lease.body");
                 rentalRepository.save(rental);
 
                 // Przekieruj na stronę z listą wynajmów
@@ -272,6 +281,13 @@ public class UserRentalController {
             redirectAttributes.addFlashAttribute("error", "You are not authorized to return this rental.");
             return "redirect:/user/lease/list";
         }
+
+        User userOwner = rental.getItem().getOwner();
+        User userLeaser = rental.getLeaser();
+
+        // Wysyłanie emaila
+        emailService.sendSimpleMessage(userOwner.getEmail(), "email.rental.return.subject", "email.rental.return.body");
+        emailService.sendSimpleMessage(userLeaser.getEmail(), "email.lease.return.subject", "email.lease.return.body");
 
         rental.setRentalStatus(RentalStatus.AVAILABLE);
         rental.setLeaser(null); // Usunięcie przypisania użytkownika do wypożyczenia

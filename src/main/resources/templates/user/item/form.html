@@ -44,13 +44,15 @@
             <!-- Image -->
             <div class="col-md-6">
 
-                <div class="form-group" th:if="${item.imageUrl != null}">
+                <!--<div class="form-group" th:if="${item.imageUrl != null and item.imageUrl != ''}">-->
+                    <div class="form-group">
                     <label class="control-label">Podgląd obrazu</label>
-                    <div class="image-preview-container" style="border: 1px solid #ddd; padding: 10px;">
+                    <div class="image-preview-container" style="border: 1px solid #ddd; padding: 10px;text-align: center">
                         <img id="imagePreview" th:if="${imageUrl}" th:src="${imageUrl}" alt="Wybrany obraz"
-                             style="max-width: 100%; height: auto;">
+                             style="max-width: 100%; height: auto;" >
                     </div>
                 </div>
+
 
                 <!-- Image Upload -->
                 <div class="form-group">

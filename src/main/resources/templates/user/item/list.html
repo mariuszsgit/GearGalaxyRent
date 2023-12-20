@@ -29,7 +29,8 @@
         Delete success.
     </div>
 
-<!--    <div th:if="${generalErrors}" class="alert alert-danger">
+<!-- TODO check errors
+    <div th:if="${generalErrors}" class="alert alert-danger">
         <span th:text="#{${generalErrors['errorDeleteItemMessage']}}">Delete error</span>
     </div>-->
 
@@ -44,11 +45,16 @@
         <tr th:each="item, status : ${items}">
             <td th:text="${status.index + 1}"></td>
             <td>
+                <img th:src="${item.imageUrl}" alt="Obraz przedmiotu" class="list-image"/>
+            </td>
+            <td>
 
                 <h3 th:text="${item.name}"></h3>
                 <p th:text="${item.description}"></p>
-                <p th:text="${item.category?.name}"></p>
-                <p th:text="${item.category?.name} ?: 'Empty category'">Empty category</p>
+                <p>
+                    <span th:text="Category">Category</span>:
+                    <span th:text="${item.category?.name} ?: 'Empty category'">Empty category</span>
+                </p>
                 <!--<p th:text="${item.price} + ' PLN'"></p>-->
 
                 <!-- Error messages -->
@@ -71,10 +77,7 @@
                    class="btn btn-success">Delete</a>
 
             </td>
-            <td>
-                <img th:if="${item.imageUrl}" th:src="@{/images/{filename}(filename=${item.imageUrl})}" alt="Obraz przedmiotu" style="max-width: 100px; max-height: 100px;"/>
-                <img th:unless="${item.imageUrl}" th:src="@{/images/missingPhoto.png}" alt="Brak obrazu" style="max-width: 100px; max-height: 100px;"/>
-            </td>
+
         </tr>
         </tbody>
     </table>

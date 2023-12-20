@@ -14,17 +14,15 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pl.scisel.category.CategoryRepository;
+import pl.scisel.images.ImageStorageService;
 import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.security.CurrentUser;
-import pl.scisel.upload.UploadController;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,8 +79,10 @@ public class UserItemController {
         }
 
         try {
-            String filePath = imageStorageService.store(file); // Zapisz obraz i uzyskaj ścieżkę
-            item.setImageUrl(filePath); // Ustaw ścieżkę obrazu w obiekcie item
+            if (file != null && !file.isEmpty()) {
+                String filePath = imageStorageService.store(file); // Zapisz obraz i uzyskaj ścieżkę
+                item.setImageUrl(filePath); // Ustaw ścieżkę obrazu
+            }
         } catch (IOException e) {
             model.addAttribute("errorMessage", "Błąd podczas zapisywania obrazu");
             return "/user/item/add";
@@ -111,6 +111,10 @@ public class UserItemController {
 
             // Pobierz przedmioty należące do zalogowanego użytkownika
             List<Item> items = itemRepository.findByOwnerId(userId);
+            items.forEach(item -> {
+                String imageUrl = imageStorageService.getImageUrl(item.getImageUrl());
+                item.setImageUrl(imageUrl);
+            });
             model.addAttribute("items", items);
         } else {
             return "redirect:/login";
@@ -144,11 +148,7 @@ public class UserItemController {
             return "redirect:/user/item/list";
         }
 
-        // Przekształć ścieżkę pliku na ścieżkę URL
-        String filename = Paths.get(item.getImageUrl()).getFileName().toString();
-        String imageUrl = MvcUriComponentsBuilder
-                .fromMethodName(UploadController.class, "serveFile", filename)
-                .build().toUri().toString();
+        String imageUrl = imageStorageService.getImageUrl(item.getImageUrl());
 
         model.addAttribute("imageUrl", imageUrl); // Dodaj ścieżkę URL do modelu
         model.addAttribute("item", item);

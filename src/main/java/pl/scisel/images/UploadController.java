@@ -1,4 +1,4 @@
-package pl.scisel.upload;
+package pl.scisel.images;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pl.scisel.user.ImageStorageService;
 
 import java.io.IOException;
 import java.nio.file.Files;

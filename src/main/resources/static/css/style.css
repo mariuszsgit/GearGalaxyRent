@@ -36,3 +36,7 @@ table {width: 100%;}
     from { opacity: 1; }
     to { opacity: 0; }
 }
+.list-image {
+    max-width: 260px; max-height: 260px;
+    margin-right: 20px;
+}
