@@ -19,11 +19,11 @@ public class SecurityConfig {
                 authorizeHttpRequests(
                         (requests) -> requests
                                 .requestMatchers("/").permitAll()
-                                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // Zasoby statyczne
-                                .requestMatchers("/user/**").hasAuthority("ROLE_USER") // Zmieniona reguła
-                                .requestMatchers("/user/**").hasAuthority("ROLE_ADMIN") // Zmieniona reguła
-                                .requestMatchers("/user/item/edit/*").hasAuthority("ROLE_USER") // Zmieniona reguła
-                                //.requestMatchers("/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                                .requestMatchers("/user/**").hasAuthority("ROLE_USER")
+                                .requestMatchers("/user/**").hasAuthority("ROLE_ADMIN")
+                                .requestMatchers("/user/item/edit/*").hasAuthority("ROLE_USER")
+                                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(
                                         "/user/item/list",
                                         "/user/item/add",

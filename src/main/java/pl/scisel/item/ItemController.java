@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/item")
+@RequestMapping("/admin/item")
 public class ItemController {
 
     private final ItemRepository itemRepository;
@@ -41,7 +41,7 @@ public class ItemController {
         }
         model.addAttribute("item", new Item());
         model.addAttribute("categories", categoryRepository.findAll());
-        return "item/add";
+        return "admin/item/add";
     }
 
     // Post
@@ -49,7 +49,7 @@ public class ItemController {
     public String save(@Valid Item item, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("item", item);
-            return "item/add";
+            return "admin/item/add";
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -59,7 +59,7 @@ public class ItemController {
         item.setOwner(user);
 
         itemRepository.save(item);
-        return "redirect:/item/list";
+        return "redirect:/admin/item/list";
     }
 
     // Edit
@@ -68,14 +68,14 @@ public class ItemController {
         Item item = itemRepository.findById(id).get();
         model.addAttribute("item", item);
         model.addAttribute("categories", categoryRepository.findAll());
-        return "item/edit";
+        return "admin/item/edit";
     }
 
     @PostMapping("/edit")
     public String update(@Valid Item item, BindingResult result, Model model, @RequestParam(name = "id") Long id) {
         if (result.hasErrors()) {
             model.addAttribute("item", item);
-            return "item/edit";
+            return "admin/item/edit";
         }
         Optional<Item> itemOptional = itemRepository.findById(id);
         if (itemOptional.isPresent()) {
@@ -86,7 +86,7 @@ public class ItemController {
             itemRepository.save(item);
         }
 
-        return "redirect:/item/list";
+        return "redirect:/admin/item/list";
     }
 
     @RequestMapping("/list")
@@ -102,7 +102,7 @@ public class ItemController {
         } else {
             return "redirect:/login";
         }
-        return "item/list";
+        return "admin/item/list";
     }
 
     // Delete
@@ -114,6 +114,6 @@ public class ItemController {
             Item item = itemOptional.get();
             itemRepository.delete(item);
         }
-        return "redirect:/item/list";
+        return "redirect:/admin/item/list";
     }
 }

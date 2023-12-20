@@ -15,8 +15,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@ToString(exclude = "rentals") // Wykluczenie powiązanej listy
-@EqualsAndHashCode(exclude = "rentals") // Podobnie, wykluczając powiązane listy
+@ToString(exclude = "rentals")
+@EqualsAndHashCode(exclude = "rentals")
 @Table(name = "items")
 public class Item {
 
@@ -37,11 +37,8 @@ public class Item {
     @ManyToOne
     private Category category;
 
-    //@ManyToOne(optional = false)
-    //@JoinColumn(name = "owner_id", nullable = false)
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @OneToMany(mappedBy = "item")

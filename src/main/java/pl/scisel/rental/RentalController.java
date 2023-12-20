@@ -17,7 +17,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/rental")
+@RequestMapping("/admin/rental")
 public class RentalController {
 
     private final ItemRepository itemRepository;
@@ -42,7 +42,7 @@ public class RentalController {
         rental.setRentTo(LocalDateTime.now());
         model.addAttribute("allStatuses", RentalStatus.values());
         model.addAttribute("items", itemRepository.findAll());
-        return "rental/add";
+        return "admin/rental/add";
     }
 
     // Add Post
@@ -50,11 +50,11 @@ public class RentalController {
     public String save(@Valid Rental rental, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("rental", rental);
-            return "rental/edit";
+            return "admin/rental/edit";
         }
 
         rentalRepository.save(rental);
-        return "redirect:/rental/list";
+        return "redirect:/admin/rental/list";
     }
 
     // Edit GET
@@ -64,7 +64,7 @@ public class RentalController {
         model.addAttribute("rental", rental);
         model.addAttribute("allStatuses", RentalStatus.values());
         model.addAttribute("items", itemRepository.findAll());
-        return "rental/edit";
+        return "admin/rental/edit";
     }
 
     //Edit Post
@@ -85,7 +85,7 @@ public class RentalController {
             model.addAttribute("rental", rental);
             model.addAttribute("allStatuses", RentalStatus.values());
             model.addAttribute("items", itemRepository.findAll());
-            return "rental/edit";
+            return "admin/rental/edit";
         }
         Optional<Rental> rentalOptional = rentalRepository.findById(id);
         if (rentalOptional.isPresent()) {
@@ -99,13 +99,13 @@ public class RentalController {
             rentalRepository.save(rentalEdited);
         }
 
-        return "redirect:/rental/list";
+        return "redirect:/admin/rental/list";
     }
 
     @RequestMapping("/list")
     public String list(Model model) {
         model.addAttribute("rentals", rentalRepository.findAll());
-        return "rental/list";
+        return "admin/rental/list";
     }
 
     @GetMapping("/delete/{id}")

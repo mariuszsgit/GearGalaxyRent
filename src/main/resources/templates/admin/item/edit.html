@@ -7,12 +7,12 @@
 </head>
 <body>
 <section layout:fragment="content">
-    <h2 th:text="#{app.rental.header.edit}">Edit rental</h2>
+    <h2 th:text="#{app.item.header.edit}">Edit category</h2>
     <form method="post" id="edit-item-form"
-          th:action="@{/rental/edit}" th:object="${rental}"
+          th:action="@{/templates/admin/item/edit}" th:object="${item}"
           class="form-horizontal form-label-left">
-        <input type="hidden" th:field="${rental.id}"/>
-        <div th:replace="~{rental/form :: div}"></div>
+        <input type="hidden" th:field="${item.id}"/>
+        <div th:replace="~{/item/form :: div}"></div>
     </form>
 </section>
 </body>
