@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" lang="pl">
-
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:lang="${locale != null ? locale.language : 'en'}">
 <head>
     <meta charset="UTF-8">
     <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE" th:text="#{app.title}"></title>
-
+    <link href="/css/style.css" rel="stylesheet">
+    <script src="/js/script.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    <script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
             crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
             integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
@@ -17,15 +19,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-    <link href="/css/style.css" rel="stylesheet">
-    <script src="/js/script.js"></script>
-
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css"/>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"
+            integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0="
+            crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -49,9 +48,7 @@
                     <a href="/user/item/list"><i class="fas fa-list"></i> Moje Przedmioty</a>
                     <a href="/user/rental/list"><i class="fas fa-list"></i> Moje Wynajmy</a>
                     <a href="/user/lease/list"><i class="fas fa-list"></i> Moje Wypożyczenia</a>
-
                 </div>
-
             </div>
 
             <div th:if="${onLoginPage == null || !onLoginPage}">
@@ -69,7 +66,7 @@
             </section>
 
             <!-- Footer -->
-            <div th:replace="~{fragments/footer-fragment :: footer}"></div>
+            <div th:replace="~{fragments/footer-fragment :: footer}" th:remove="tag"></div>
 
         </div>
     </div>

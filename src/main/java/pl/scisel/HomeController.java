@@ -10,6 +10,8 @@ import pl.scisel.rental.RentalRepository;
 import pl.scisel.security.CurrentUser;
 import pl.scisel.util.RentalStatus;
 
+import java.util.Locale;
+
 @Controller
 public class HomeController {
 
@@ -20,14 +22,14 @@ public class HomeController {
     }
 
     @RequestMapping("/")
-    public String home(Model model, Authentication authentication) {
+    public String home(Model model, Authentication authentication, Locale locale) {
 
         if (authentication != null && authentication.isAuthenticated()) {
             CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
             model.addAttribute("currentUser", currentUser);
         }
         model.addAttribute("rentals", rentalRepository.findByRentalStatus(RentalStatus.AVAILABLE));
-        //model.addAttribute("rentals", rentalRepository.findAll());
+        model.addAttribute("locale", locale);
         return "home/list";
     }
 

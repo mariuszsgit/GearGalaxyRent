@@ -1,36 +1,32 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pl">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Login header info</title>
 </head>
 <body>
-
 <!-- login-fragment.html -->
 <div th:fragment="login-fragment">
 
     <div class="row">
-
         <div class="col-md-9 text-right ">
-            <p sec:authorize="isAnonymous()" th:text="#{app.login.anonymous}" th:class="page-login-header-user-guest">Guest</p>
+            <p sec:authorize="isAnonymous()" th:text="#{app.login.anonymous}" th:class="page-login-header-user-guest">
+                Guest</p>
 
             <div sec:authorize="isAuthenticated()" th:remove="tag">
-
                 <div>
-                    Witaj, <span th:text="${#authentication.principal.user.firstName} + ' ' + ${#authentication.principal.user.lastName}" class="font-weight-bold"></span><br>
+                    Witaj, <span th:text="${#authentication.principal.user.firstName} + ' '
+                    + ${#authentication.principal.user.lastName}" class="font-weight-bold"></span><br>
                     @<span sec:authentication="name">Guest</span>
                     (<span th:each="authority : ${#authentication.authorities}"
                            th:text="${authority.authority.substring(5).toLowerCase()}"></span>)
                 </div>
             </div>
-
         </div>
 
         <div class="col-md-3 text-right d-flex justify-content-center align-items-center">
-
             <div sec:authorize="isAuthenticated()" th:remove="tag">
-                <!--                    <span th:text="${#authentication.firstName} + ' ' + ${#authentication.lastName}"></span>-->
                 <a href="/logout" class="btn btn-info">Wyloguj</a>
             </div>
 
