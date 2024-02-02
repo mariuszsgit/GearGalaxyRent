@@ -54,16 +54,6 @@ public class UserItemController {
     // Get
     @RequestMapping("/item/add")
     public String add(Model model) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getPrincipal() instanceof CurrentUser) {
-            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-            Long userId = currentUser.getUser().getId();
-
-        } else {
-            return "redirect:/login";
-        }
-
         model.addAttribute("item", new Item());
         model.addAttribute("categories", categoryRepository.findAll());
         return "/user/item/add";

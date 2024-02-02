@@ -1,6 +1,5 @@
 package pl.scisel.user;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,8 +19,8 @@ import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
 import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalRepository;
+import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
-import pl.scisel.util.RentalStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,6 +39,10 @@ public class UserRentalController {
 
     @Autowired
     private MessageSource messageSource;
+
+    @Autowired
+    private UserRentalService userRentalService;
+
     private static final Logger logger = LoggerFactory.getLogger(UserRentalController.class);
 
     UserRentalController(UserRepository userRepository,
@@ -97,8 +100,13 @@ public class UserRentalController {
         }
 
         CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+
+        // to zostaje
+
         User user = currentUser.getUser();
         Long userId = user.getId();
+
+        // TODO: Usera przekazać do service, w service rzucić wyjątek, i tutaj go obsłużyć
 
         // Sprawdź, czy użytkownik ma dostęp do edycji tego wynajmu
         Optional<Rental> optionalRental = rentalRepository.findById(rentalId);
@@ -135,6 +143,10 @@ public class UserRentalController {
                                BindingResult result, Model model,
                                @RequestParam(name = "id") Long id) {
 
+        // 1. tą walidację można zrobić już w Adnotacji
+        // komunikaty ustawić w adnotacji ,
+        // 2. albo sprawdzać w serwisie,
+        // w serwisie łapać wyjątek i obsłużyć
         if (rental.getRentFrom() != null && rental.getRentTo() != null) {
             if (rental.getRentTo().isBefore(rental.getRentFrom())) {
                 Locale currentLocale = LocaleContextHolder.getLocale();
@@ -178,15 +190,8 @@ public class UserRentalController {
 
 
     @RequestMapping("/rental/list")
-    public String listRentals(Model model) {
+    public String listRentals(Model model, @AuthenticationPrincipal CurrentUser currentUser) {
 
-        // Uwierzytelnienie
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
         Long userId = currentUser.getUser().getId();
 
         List<Rental> rentals = rentalRepository.findByItemOwnerId(userId); // Pobierz wynajmy, które zawierają przedmioty należące do zalogowanego użytkownika
@@ -205,39 +210,13 @@ public class UserRentalController {
     }
 
     @RequestMapping("/rental/lease/{rentalId}")
-    public String leaseRental(@PathVariable Long rentalId, Model model, Authentication authentication) {
-        if (!(authentication.getPrincipal() instanceof CurrentUser)) {
+    public String leaseRental(@PathVariable Long rentalId, Model model, @AuthenticationPrincipal CurrentUser currentUser) {
+        if (currentUser == null) {
             return "redirect:/login";
         }
 
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-
-        // Pobierz zalogowanego użytkownika (user2)
-        User user2 = currentUser.getUser();
-
-        // Pobierz wynajem, który ma być wypożyczony
-        Optional<Rental> optionalRental = rentalRepository.findById(rentalId);
-
-        if (optionalRental.isPresent()) {
-            Rental rental = optionalRental.get();
-            Item rentalItem = rental.getItem();
-            User user1 = rentalItem.getOwner(); // Pobierz właściciela przedmiotu
-
-            // Sprawdź, czy użytkownik (user2) nie jest właścicielem przedmiotu wynajmu
-            if (!user1.equals(user2)) {
-                // Przypisz wypożyczenie (rental) do użytkownika (user2)
-                rental.setLeaser(user2);
-                rental.setRentalStatus(RentalStatus.RENTED);
-
-                // Wysyłanie emaila
-
-                emailService.sendSimpleMessage(user1.getEmail(), "email.rental.subject", "email.rental.body");
-                emailService.sendSimpleMessage(user2.getEmail(), "email.lease.subject", "email.lease.body");
-                rentalRepository.save(rental);
-
-                // Przekieruj na stronę z listą wynajmów
-                return "redirect:/user/lease/list";
-            }
+        if (userRentalService.rentalLease(rentalId, currentUser)) {
+            return "redirect:/user/lease/list";
         }
 
         // Jeśli wynajem nie istnieje lub użytkownik jest właścicielem wynajmu, przekieruj na /
@@ -245,12 +224,11 @@ public class UserRentalController {
     }
 
     @RequestMapping("/lease/list")
-    public String listLeasedItems(Model model, Authentication authentication) {
-        if (authentication.getPrincipal() instanceof CurrentUser) {
-            CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
+    public String listLeasedItems(Model model, @AuthenticationPrincipal CurrentUser currentUser) {
+        if (currentUser != null) {
             Long leaserId = currentUser.getUser().getId();
             User owner = currentUser.getUser(); // To może być inny użytkownik niż zalogowany
-
+            //TODO: W kontrolerze nie wywoływać rentalRepository, przenieść do Service i tam wywoływać
             List<Rental> leasedItems = rentalRepository.findByLeaserIdAndItemOwnerNot(leaserId, owner);
             model.addAttribute("leases", leasedItems);
 
@@ -261,37 +239,32 @@ public class UserRentalController {
     }
 
     @GetMapping("/rental/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable Long id, @AuthenticationPrincipal CurrentUser currentUser, RedirectAttributes redirectAttributes) {
+        if (currentUser == null) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to perform this action.");
+            return "redirect:/login";
+        }
 
         Optional<Rental> rentalOptional = rentalRepository.findById(id);
         if (rentalOptional.isPresent()) {
             Rental rental = rentalOptional.get();
+
             rentalRepository.delete(rental);
+            redirectAttributes.addFlashAttribute("success", "Rental deleted successfully.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Rental not found.");
         }
         return "redirect:/user/rental/list";
     }
 
     @PostMapping("/rental/return/{rentalId}")
-    public String returnRental(@PathVariable Long rentalId, Authentication authentication, RedirectAttributes redirectAttributes) {
-        Rental rental = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new EntityNotFoundException("Rental not found with id: " + rentalId));
+    public String returnRental(@PathVariable Long rentalId, @AuthenticationPrincipal CurrentUser currentUser, RedirectAttributes redirectAttributes) {
+        boolean isReturned = userRentalService.returnRental(rentalId, currentUser);
 
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-        if (!rental.getLeaser().getId().equals(currentUser.getUser().getId())) {
+        if (!isReturned) {
             redirectAttributes.addFlashAttribute("error", "You are not authorized to return this rental.");
             return "redirect:/user/lease/list";
         }
-
-        User userOwner = rental.getItem().getOwner();
-        User userLeaser = rental.getLeaser();
-
-        // Wysyłanie emaila
-        emailService.sendSimpleMessage(userOwner.getEmail(), "email.rental.return.subject", "email.rental.return.body");
-        emailService.sendSimpleMessage(userLeaser.getEmail(), "email.lease.return.subject", "email.lease.return.body");
-
-        rental.setRentalStatus(RentalStatus.AVAILABLE);
-        rental.setLeaser(null); // Usunięcie przypisania użytkownika do wypożyczenia
-        rentalRepository.save(rental);
 
         redirectAttributes.addFlashAttribute("success", "Item returned successfully.");
         return "redirect:/user/lease/list";

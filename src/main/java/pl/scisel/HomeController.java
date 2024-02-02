@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.security.CurrentUser;
-import pl.scisel.util.RentalStatus;
+import pl.scisel.rental.RentalStatus;
 
 import java.util.Locale;
 
@@ -23,13 +23,12 @@ public class HomeController {
 
     @RequestMapping("/")
     public String home(Model model, Authentication authentication, Locale locale) {
-
+        // TODO: to przenieść do Thymeleaf, na frontend
         if (authentication != null && authentication.isAuthenticated()) {
             CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
             model.addAttribute("currentUser", currentUser);
         }
         model.addAttribute("rentals", rentalRepository.findByRentalStatus(RentalStatus.AVAILABLE));
-        model.addAttribute("locale", locale);
         return "home/list";
     }
 

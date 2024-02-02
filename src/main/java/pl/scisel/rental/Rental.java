@@ -6,7 +6,6 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import pl.scisel.item.Item;
 import pl.scisel.user.User;
-import pl.scisel.util.RentalStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

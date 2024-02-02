@@ -16,21 +16,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/create-user")
-    @ResponseBody
-    public String createUser() {
-        User user = new User();
-        user.setUsername("user3");
-        user.setPassword("user3");
-        user.setEmail("user3@emil.com");
-        user.setFirstName("User3");
-        user.setLastName("User3");
-        user.setEnabled(1);
-
-        userService.saveUser(user);
-        return "admin";
-    }
-
     @GetMapping("/admin1")
     @ResponseBody
     public String userInfo(@AuthenticationPrincipal UserDetails customUser) {

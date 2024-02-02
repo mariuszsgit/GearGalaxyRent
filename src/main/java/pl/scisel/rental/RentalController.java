@@ -10,7 +10,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import pl.scisel.category.CategoryRepository;
 import pl.scisel.item.ItemRepository;
-import pl.scisel.util.RentalStatus;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
