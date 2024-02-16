@@ -8,11 +8,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
+import pl.scisel.item.ItemRepository;
 import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -20,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UserRentalServiceTest {
+
+    @Mock
+    private ItemRepository itemRepository;
 
     @Mock
     private RentalRepository rentalRepository;
@@ -37,6 +43,45 @@ class UserRentalServiceTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
+
+    @Test
+    public void testCreateNewRental() {
+        // Act
+        Rental rental = userRentalService.createNewRental();
+
+        // Assert
+        assertNotNull(rental);
+        assertEquals(BigDecimal.valueOf(0), rental.getPrice());
+        assertTrue(rental.getRentFrom().isBefore(LocalDateTime.now().plusSeconds(1)));
+        assertTrue(rental.getRentTo().isBefore(LocalDateTime.now().plusSeconds(1)));
+    }
+
+    @Test
+    public void testGetItemIfOwnedByUser() throws IllegalAccessException {
+        // Arrange
+        Long itemId = 1L;
+        Long userId = 1L;
+        Item item = new Item();
+        when(itemRepository.findByIdAndOwnerId(itemId, userId)).thenReturn(Optional.of(item));
+
+        // Act
+        Item result = userRentalService.getItemIfOwnedByUser(itemId, userId);
+
+        // Assert
+        assertEquals(item, result);
+    }
+
+    @Test
+    public void testGetItemIfOwnedByUserThrowsException() {
+        // Arrange
+        Long itemId = 1L;
+        Long userId = 1L;
+        when(itemRepository.findByIdAndOwnerId(itemId, userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalAccessException.class, () -> userRentalService.getItemIfOwnedByUser(itemId, userId));
+    }
+
 
     @Test
     public void whenReturnRental_thenSuccess() {

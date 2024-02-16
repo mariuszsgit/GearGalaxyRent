@@ -7,28 +7,52 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BindException;
 import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
+import pl.scisel.item.ItemRepository;
 import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 public class UserRentalService {
 
+    private final ItemRepository itemRepository;
     private final RentalRepository rentalRepository;
     private final MessageSource messageSource;
     private final EmailService emailService;
 
-    UserRentalService(RentalRepository rentalRepository,
+    UserRentalService(ItemRepository itemRepository,
+                      RentalRepository rentalRepository,
                       MessageSource messageSource,
                       EmailService emailService) {
+        this.itemRepository = itemRepository;
         this.rentalRepository = rentalRepository;
         this.messageSource = messageSource;
         this.emailService = emailService;
+    }
+
+    public Rental createNewRental() {
+        Rental rental = new Rental();
+        rental.setRentFrom(LocalDateTime.now());
+        rental.setRentTo(LocalDateTime.now());
+        rental.setPrice(BigDecimal.valueOf(0));
+        return rental;
+    }
+
+    public Item getItemIfOwnedByUser(Long itemId, Long userId) throws IllegalAccessException {
+        Optional<Item> optionalItem = itemRepository.findByIdAndOwnerId(itemId, userId);
+        if (optionalItem.isPresent()) {
+            return optionalItem.get();
+        } else {
+            throw new IllegalAccessException("Item with given ID does not belong to the user.");
+        }
     }
 
     public void checkIfFromIsBeforeTo(Rental rental) throws BindException {
@@ -40,6 +64,27 @@ public class UserRentalService {
             bindException.rejectValue("rentTo", "error.rentTo", errorMessage);
             throw bindException;
         }
+    }
+
+    public Rental getEditableRental(Long rentalId, Long userId) throws IllegalAccessException {
+        Optional<Rental> optionalRental = rentalRepository.findById(rentalId);
+
+        if (optionalRental.isPresent()) {
+            Rental rental = optionalRental.get();
+            Item rentalItem = rental.getItem();
+
+            if (rentalItem == null || rentalItem.getOwner() == null || !rentalItem.getOwner().getId().equals(userId)) {
+                throw new IllegalAccessException("User does not have access to edit this rental.");
+            }
+
+            return rental;
+        } else {
+            throw new NoSuchElementException("Rental with given ID does not exist.");
+        }
+    }
+
+    public List<Item> getUserItems(Long userId) {
+        return itemRepository.findByOwnerId(userId);
     }
 
     public void updateRental(Rental rental) throws BindException {
