@@ -1,8 +1,10 @@
 package pl.scisel.user;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindException;
 import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
 import pl.scisel.rental.Rental;
@@ -10,16 +12,40 @@ import pl.scisel.rental.RentalRepository;
 import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
 public class UserRentalService {
 
-    @Autowired
-    private RentalRepository rentalRepository;
+    private final RentalRepository rentalRepository;
+    private final MessageSource messageSource;
+    private final EmailService emailService;
 
-    @Autowired
-    private EmailService emailService;
+    UserRentalService(RentalRepository rentalRepository,
+                      MessageSource messageSource,
+                      EmailService emailService) {
+        this.rentalRepository = rentalRepository;
+        this.messageSource = messageSource;
+        this.emailService = emailService;
+    }
+
+    public void checkIfFromIsBeforeTo(Rental rental) throws BindException {
+        if (rental.getRentFrom() != null && rental.getRentTo() != null &&
+                rental.getRentTo().isBefore(rental.getRentFrom())) {
+            BindException bindException = new BindException(rental, "rentTo");
+            Locale currentLocale = LocaleContextHolder.getLocale();
+            String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
+            bindException.rejectValue("rentTo", "error.rentTo", errorMessage);
+            throw bindException;
+        }
+    }
+
+    public void updateRental(Rental rental) throws BindException {
+        checkIfFromIsBeforeTo(rental);
+        rentalRepository.save(rental);
+    }
 
     public boolean rentalLease(Long rentalId, CurrentUser currentUser) {
         User user2 = currentUser.getUser();
@@ -71,4 +97,27 @@ public class UserRentalService {
         return true;
     }
 
+    public boolean deleteRental(Long id) {
+        Optional<Rental> rentalOptional = rentalRepository.findById(id);
+        if (rentalOptional.isPresent()) {
+            rentalRepository.delete(rentalOptional.get());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public List<Rental> getRentalsByUser(User user) {
+        return rentalRepository.findByLeaserIdAndItemOwnerNot(user.getId(), user);
+    }
+
+    public List<Rental> getRentalsByItemOwnerId(Long ownerId) {
+        return rentalRepository.findByItemOwnerId(ownerId);
+    }
+
+    public void save(Rental rental) {
+        if (rental != null) {
+            rentalRepository.save(rental);
+        }
+    }
 }

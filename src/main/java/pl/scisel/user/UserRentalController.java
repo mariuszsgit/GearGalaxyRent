@@ -3,18 +3,14 @@ package pl.scisel.user;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import pl.scisel.category.CategoryRepository;
-import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
 import pl.scisel.rental.Rental;
@@ -25,33 +21,28 @@ import pl.scisel.security.CurrentUser;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequestMapping("/user")
 @Controller
 public class UserRentalController {
     private final ItemRepository itemRepository;
-    private final UserRepository userRepository;
     private final RentalRepository rentalRepository;
-    @Autowired
-    private EmailService emailService;
 
-    @Autowired
-    private MessageSource messageSource;
-
-    @Autowired
-    private UserRentalService userRentalService;
+    private final UserItemService userItemService;
+    private final UserRentalService userRentalService;
 
     private static final Logger logger = LoggerFactory.getLogger(UserRentalController.class);
 
-    UserRentalController(UserRepository userRepository,
-                         ItemRepository itemRepository,
-                         CategoryRepository categoryRepository,
-                         RentalRepository rentalRepository) {
-        this.userRepository = userRepository;
+    UserRentalController(ItemRepository itemRepository,
+                         RentalRepository rentalRepository,
+                         UserRentalService userRentalService,
+                         UserItemService userItemService) {
         this.itemRepository = itemRepository;
         this.rentalRepository = rentalRepository;
+        this.userRentalService = userRentalService;
+        this.userItemService = userItemService;
     }
 
     // Add Get
@@ -91,18 +82,11 @@ public class UserRentalController {
     }
 
     //
-    // Edit GET
+    // Edit, GET
     //
     @RequestMapping("/rental/edit/{rentalId}")
-    public String editRental(@PathVariable Long rentalId, Model model, Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof CurrentUser)) {
-            return "redirect:/login";
-        }
-
-        CurrentUser currentUser = (CurrentUser) authentication.getPrincipal();
-
-        // to zostaje
-
+    public String editRental(@PathVariable Long rentalId, Model model,
+                             @AuthenticationPrincipal CurrentUser currentUser) {
         User user = currentUser.getUser();
         Long userId = user.getId();
 
@@ -139,38 +123,18 @@ public class UserRentalController {
     // Edit Post
     //
     @PostMapping("/rental/edit")
-    public String updateRental(@Valid Rental rental,
-                               BindingResult result, Model model,
-                               @RequestParam(name = "id") Long id) {
-
-        // 1. tą walidację można zrobić już w Adnotacji
-        // komunikaty ustawić w adnotacji ,
-        // 2. albo sprawdzać w serwisie,
-        // w serwisie łapać wyjątek i obsłużyć
-        if (rental.getRentFrom() != null && rental.getRentTo() != null) {
-            if (rental.getRentTo().isBefore(rental.getRentFrom())) {
-                Locale currentLocale = LocaleContextHolder.getLocale();
-                String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
-                result.rejectValue("rentTo", "error.rentTo", errorMessage);
-            }
+    public String updateRental(@Valid Rental rental, BindingResult result, Model model) {
+        try {
+            userRentalService.updateRental(rental);
+        } catch (BindException e) {
+            result.addError(Objects.requireNonNull(e.getFieldError()));
         }
 
         if (result.hasErrors()) {
             model.addAttribute("rental", rental);
             model.addAttribute("allStatuses", RentalStatus.values());
-            model.addAttribute("items", itemRepository.findAll());
+            model.addAttribute("items", userItemService.getAllItems()); // TODO: Zapytać o przeniesienie tego do service
             return "user/rental/edit";
-        }
-        Optional<Rental> rentalOptional = rentalRepository.findById(id);
-        if (rentalOptional.isPresent()) {
-            Rental rentalEdited = rentalOptional.get();
-            rentalEdited.setId(rental.getId());
-            rentalEdited.setPrice(rental.getPrice());
-            rentalEdited.setRentFrom(rental.getRentFrom());
-            rentalEdited.setRentTo(rental.getRentTo());
-            rentalEdited.setRentalStatus(rental.getRentalStatus());
-            rentalEdited.setItem(rental.getItem());
-            rentalRepository.save(rentalEdited);
         }
 
         return "redirect:/user/rental/list";
@@ -179,31 +143,23 @@ public class UserRentalController {
     // Add Post
     @PostMapping("/rental/add")
     public String save(@Valid Rental rental, BindingResult result, Model model) {
+
+        // TODO: Czy to już może mieć błędy na starcie?
         if (result.hasErrors()) {
             model.addAttribute("rental", rental);
             return "user/rental/add";
         }
 
-        rentalRepository.save(rental);
+        userRentalService.save(rental);
         return "redirect:/user/rental/list";
     }
 
-
     @RequestMapping("/rental/list")
     public String listRentals(Model model, @AuthenticationPrincipal CurrentUser currentUser) {
-
         Long userId = currentUser.getUser().getId();
 
-        List<Rental> rentals = rentalRepository.findByItemOwnerId(userId); // Pobierz wynajmy, które zawierają przedmioty należące do zalogowanego użytkownika
-
-        // Dla każdego wynajmu, pobierz przypisany przedmiot i dodaj jego nazwę i opis do wynajmu
-        for (Rental rental : rentals) {
-            Item rentalItem = rental.getItem();
-            if (rentalItem != null) {
-                //rental.setRentalItemName(rentalItem.getName());
-                //rental.setRentalItemDescription(rentalItem.getDescription());
-            }
-        }
+        // Pobierz wynajmy, które zawierają przedmioty należące do zalogowanego użytkownika
+        List<Rental> rentals = userRentalService.getRentalsByItemOwnerId(userId);
 
         model.addAttribute("rentals", rentals);
         return "user/rental/list";
@@ -226,10 +182,8 @@ public class UserRentalController {
     @RequestMapping("/lease/list")
     public String listLeasedItems(Model model, @AuthenticationPrincipal CurrentUser currentUser) {
         if (currentUser != null) {
-            Long leaserId = currentUser.getUser().getId();
-            User owner = currentUser.getUser(); // To może być inny użytkownik niż zalogowany
-            //TODO: W kontrolerze nie wywoływać rentalRepository, przenieść do Service i tam wywoływać
-            List<Rental> leasedItems = rentalRepository.findByLeaserIdAndItemOwnerNot(leaserId, owner);
+            User leaser = currentUser.getUser();
+            List<Rental> leasedItems = userRentalService.getRentalsByUser(leaser);
             model.addAttribute("leases", leasedItems);
 
             return "user/lease/list";
@@ -240,20 +194,18 @@ public class UserRentalController {
 
     @GetMapping("/rental/delete/{id}")
     public String delete(@PathVariable Long id, @AuthenticationPrincipal CurrentUser currentUser, RedirectAttributes redirectAttributes) {
+
         if (currentUser == null) {
             redirectAttributes.addFlashAttribute("error", "You must be logged in to perform this action.");
             return "redirect:/login";
         }
 
-        Optional<Rental> rentalOptional = rentalRepository.findById(id);
-        if (rentalOptional.isPresent()) {
-            Rental rental = rentalOptional.get();
-
-            rentalRepository.delete(rental);
+        if (userRentalService.deleteRental(id)) {
             redirectAttributes.addFlashAttribute("success", "Rental deleted successfully.");
         } else {
             redirectAttributes.addFlashAttribute("error", "Rental not found.");
         }
+
         return "redirect:/user/rental/list";
     }
 

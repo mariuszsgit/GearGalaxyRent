@@ -116,8 +116,9 @@ class UserRentalServiceTest {
                 .firstName("LeaserFirstName")
                 .lastName("LeaserLastName")
                 .build();
+
         User differentUser = User.builder()
-                .id(2L)
+                .id(3L)
                 .username("differentUserName")
                 .password("differentUserPassword")
                 .enabled(1)
