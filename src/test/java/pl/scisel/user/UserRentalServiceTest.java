@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.MessageSource;
+import org.springframework.validation.BindException;
 import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
@@ -17,6 +19,8 @@ import pl.scisel.security.CurrentUser;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,6 +37,9 @@ class UserRentalServiceTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private MessageSource messageSource;
+
     @InjectMocks
     private UserRentalService userRentalService;
 
@@ -46,10 +53,8 @@ class UserRentalServiceTest {
 
     @Test
     public void testCreateNewRental() {
-        // Act
         Rental rental = userRentalService.createNewRental();
 
-        // Assert
         assertNotNull(rental);
         assertEquals(BigDecimal.valueOf(0), rental.getPrice());
         assertTrue(rental.getRentFrom().isBefore(LocalDateTime.now().plusSeconds(1)));
@@ -58,30 +63,75 @@ class UserRentalServiceTest {
 
     @Test
     public void testGetItemIfOwnedByUser() throws IllegalAccessException {
-        // Arrange
         Long itemId = 1L;
         Long userId = 1L;
         Item item = new Item();
         when(itemRepository.findByIdAndOwnerId(itemId, userId)).thenReturn(Optional.of(item));
-
-        // Act
         Item result = userRentalService.getItemIfOwnedByUser(itemId, userId);
-
-        // Assert
         assertEquals(item, result);
     }
 
     @Test
     public void testGetItemIfOwnedByUserThrowsException() {
-        // Arrange
         Long itemId = 1L;
         Long userId = 1L;
         when(itemRepository.findByIdAndOwnerId(itemId, userId)).thenReturn(Optional.empty());
-
-        // Act & Assert
         assertThrows(IllegalAccessException.class, () -> userRentalService.getItemIfOwnedByUser(itemId, userId));
     }
 
+    @Test
+    public void testCheckIfFromIsBeforeTo() throws BindException {
+        Rental rental = new Rental();
+        rental.setRentFrom(LocalDateTime.now());
+        rental.setRentTo(LocalDateTime.now().plusDays(1));
+        assertDoesNotThrow(() -> userRentalService.checkIfFromIsBeforeTo(rental));
+    }
+
+    @Test
+    public void testCheckIfFromIsBeforeToThrowsException() {
+        Rental rental = new Rental();
+        rental.setRentFrom(LocalDateTime.now());
+        rental.setRentTo(LocalDateTime.now().minusDays(1));
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Error message");
+        assertThrows(BindException.class, () -> userRentalService.checkIfFromIsBeforeTo(rental));
+    }
+
+    @Test
+    public void testGetEditableRental() throws IllegalAccessException {
+        Long rentalId = 1L;
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        Item item = new Item();
+        item.setOwner(user);
+        Rental rental = new Rental();
+        rental.setItem(item);
+        when(rentalRepository.findById(rentalId)).thenReturn(Optional.of(rental));
+        Rental result = userRentalService.getEditableRental(rentalId, userId);
+        assertEquals(rental, result);
+    }
+
+    @Test
+    public void testGetEditableRentalThrowsIllegalAccessException() {
+        Long rentalId = 1L;
+        Long userId = 1L;
+        User user = new User();
+        user.setId(2L); // Different user ID
+        Item item = new Item();
+        item.setOwner(user);
+        Rental rental = new Rental();
+        rental.setItem(item);
+        when(rentalRepository.findById(rentalId)).thenReturn(Optional.of(rental));
+        assertThrows(IllegalAccessException.class, () -> userRentalService.getEditableRental(rentalId, userId));
+    }
+
+    @Test
+    public void testGetEditableRentalThrowsNoSuchElementException() {
+        Long rentalId = 1L;
+        Long userId = 1L;
+        when(rentalRepository.findById(rentalId)).thenReturn(Optional.empty());
+        assertThrows(NoSuchElementException.class, () -> userRentalService.getEditableRental(rentalId, userId));
+    }
 
     @Test
     public void whenReturnRental_thenSuccess() {
