@@ -1,10 +1,7 @@
 package pl.scisel.user;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindException;
 import pl.scisel.email.EmailService;
 import pl.scisel.item.Item;
 import pl.scisel.item.ItemRepository;
@@ -12,11 +9,11 @@ import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalRepository;
 import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
+import pl.scisel.user.exception.ToDateIsBeforeFromDateException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -25,16 +22,13 @@ public class UserRentalService {
 
     private final ItemRepository itemRepository;
     private final RentalRepository rentalRepository;
-    private final MessageSource messageSource;
     private final EmailService emailService;
 
     UserRentalService(ItemRepository itemRepository,
                       RentalRepository rentalRepository,
-                      MessageSource messageSource,
                       EmailService emailService) {
         this.itemRepository = itemRepository;
         this.rentalRepository = rentalRepository;
-        this.messageSource = messageSource;
         this.emailService = emailService;
     }
 
@@ -52,17 +46,6 @@ public class UserRentalService {
             return optionalItem.get();
         } else {
             throw new IllegalAccessException("Item with given ID does not belong to the user.");
-        }
-    }
-
-    public void checkIfFromIsBeforeTo(Rental rental) throws BindException {
-        if (rental.getRentFrom() != null && rental.getRentTo() != null &&
-                rental.getRentTo().isBefore(rental.getRentFrom())) {
-            BindException bindException = new BindException(rental, "rentTo");
-            Locale currentLocale = LocaleContextHolder.getLocale();
-            String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
-            bindException.rejectValue("rentTo", "error.rentTo", errorMessage);
-            throw bindException;
         }
     }
 
@@ -87,7 +70,14 @@ public class UserRentalService {
         return itemRepository.findByOwnerId(userId);
     }
 
-    public void updateRental(Rental rental) throws BindException {
+    public void checkIfFromIsBeforeTo(Rental rental) {
+        if (rental.getRentFrom() != null && rental.getRentTo() != null &&
+                rental.getRentTo().isBefore(rental.getRentFrom())) {
+            throw new ToDateIsBeforeFromDateException("Rent date from is after to rent date.");
+        }
+    }
+
+    public void updateRental(Rental rental) {
         checkIfFromIsBeforeTo(rental);
         rentalRepository.save(rental);
     }

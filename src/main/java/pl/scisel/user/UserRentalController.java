@@ -3,10 +3,11 @@ package pl.scisel.user;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -14,10 +15,11 @@ import pl.scisel.item.Item;
 import pl.scisel.rental.Rental;
 import pl.scisel.rental.RentalStatus;
 import pl.scisel.security.CurrentUser;
+import pl.scisel.user.exception.ToDateIsBeforeFromDateException;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 
 @RequestMapping("/user")
@@ -25,13 +27,16 @@ import java.util.Optional;
 public class UserRentalController {
     private final UserItemService userItemService;
     private final UserRentalService userRentalService;
+    private final MessageSource messageSource;
 
     private static final Logger logger = LoggerFactory.getLogger(UserRentalController.class);
 
     UserRentalController(UserRentalService userRentalService,
-                         UserItemService userItemService) {
+                         UserItemService userItemService,
+                         MessageSource messageSource) {
         this.userRentalService = userRentalService;
         this.userItemService = userItemService;
+        this.messageSource = messageSource;
     }
 
     // Add Get
@@ -93,8 +98,10 @@ public class UserRentalController {
     public String updateRental(@Valid Rental rental, BindingResult result, Model model) {
         try {
             userRentalService.updateRental(rental);
-        } catch (BindException e) {
-            result.addError(Objects.requireNonNull(e.getFieldError()));
+        } catch (ToDateIsBeforeFromDateException e) {
+            Locale currentLocale = LocaleContextHolder.getLocale();
+            String errorMessage = messageSource.getMessage("rentTo.after.rentFrom", null, currentLocale);
+            result.rejectValue("rentTo", "error.rentTo", errorMessage);
         }
 
         if (result.hasErrors()) {
